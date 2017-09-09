@@ -1,0 +1,446 @@
+
+/* [ LANDING Border DOM ] */
+
+  .system_border_area{
+	background-color:rgba(0,0,0,0.4);   
+	min-height:350px;
+	color:#FFFFFF;
+	position:relative;
+	z-index:3;
+  }	  
+ 
+  .border-block{
+	display:flex;
+	position:relative;
+  }	
+	
+	/* introduction */
+	.introduction{
+	  width:50%;
+	  padding:40px 15px 0;
+	}
+	.introduction > h1{
+	  font-size:2.8em;
+	  margin:10px 0;
+	  line-height:1.1em;
+	  letter-spacing:0.05em;
+	  display:flex;
+	  align-items:flex-start;
+	}
+	
+	.introduction > h1 >span{flex:1;}
+	
+
+	
+	  
+	.introduction > p{
+	  text-indent : 1em ;	
+	  margin-bottom:2em;
+	  line-height:1.5em;
+	  letter-spacing:0.1em;
+	  color:#f3f3f2;
+	}  
+		
+        
+	/* Booking */ 
+	
+	.registration{
+	  padding:0 90px;	
+	  width:50%;
+	  position:absolute;
+	  top:0px;
+	  right:0;
+	  flex:10;
+	}
+	  
+	  ul.form_manual{
+		display:flex;  
+		position:relative;
+		padding:0 5px;
+	  }
+	  ul.form_manual > li{
+		padding:15px 10px;	
+		background-color:rgba(103,39,45,1); 
+		border-radius:5px 5px 0 0;
+	  }
+	  
+	  ul.form_manual > li.atthis{
+		opacity:1;			
+	  }
+	  
+	  ul.form_manual > li.link >a{
+		color:#FFFFFF;  
+	  }
+	    li#tosignup{
+		  position:absolute;
+          right:5px; 		  
+		}
+	  
+	  
+	  .formblock{
+		background-color:rgba(103,39,45,0.9);     
+		padding:10px 35px;
+		border-radius:5px;
+		display:none;
+	  }
+	  
+	  .formblock h1{
+		font-size:1.1em;
+		text-align:center;
+	    padding:10px;
+	  }	
+		
+		div.form_raw{
+		  margin-top:12px;
+		  position:relative;			  
+		}		  
+		  .form_raw > p,.form_raw > ul{line-height:1.4em;}
+		  .form_raw > ul{margin-left:5px}
+		div.form_raw > label{ 
+		  display:block;
+		  padding:5px 0;
+		} 
+		
+		div.form_raw > .form_selecter{
+		  padding:8px 0;	
+		}
+		div.form_raw > input[type='email'],
+		div.form_raw > input[type='text'],
+		div.form_raw > input[type='password'],
+		div.form_raw > select{
+		  color:#5383c3;	
+		  border:2px #FFFFFF solid;	
+		  border-radius:3px;
+		  padding:8px 10px;
+		  width:100%;
+		  font-size:0.9em;
+		  height:38px;
+		  line-height:38px;
+		}
+		
+		div.form_raw._wrong > input,div.form_raw._wrong > select,div.form_raw._wrong > select{
+		  border-color:red;	
+		}
+		
+		div.form_raw._wrong::after{
+		  display:inline;
+		  position:absolute;
+		  right:-17px;
+		  bottom:12px;
+		  content:"×";
+		  color:red;
+		  font-weight:bold; 			  
+		}
+
+		div.form_func{
+		  padding:16px 0 10px;
+		  position:relative;
+		  display:flex;
+		  justify-content:space-between;
+		  align-items:center;
+		}
+		
+		.form_func  button{
+		  display:inline-flex;
+		  justify-content:center;
+		  align-items:center;
+		  font-size:1em;  
+		  min-width:60px;  
+		  height:40px;   
+		  border:0px #CDCDCD solid;
+		  border-radius:3px;
+		  color:#FFFFFF;
+		  cursor:pointer;
+		}
+
+		.form_func  button.cancel{
+		   opacity:0.7;	
+		   border:1px #CDCDCD solid;
+		   background: rgba(255,255,255,0);	
+		   background-color:rgba(255,255,255,0);
+		}
+		
+		.form_func  button.cancel:hover{
+		  color:red;	
+		  opacity:1;	
+		  background-color:rgba(255,255,255,0);
+		  background: linear-gradient(to bottom, rgba(238,238,238,1) 0%,rgba(204,204,204,1) 100%);
+		  border:1px rgba(0,0,0,0) solid;
+		}
+	  
+		.form_func  button.cancel:active{
+		  opacity:1;
+		  background-color:rgba(255,255,255,0);
+		  background: linear-gradient(to bottom, rgba(238,238,238,1) 0%,rgba(124,124,124,1) 100%);
+		  border:1px rgba(0,0,0,0) solid;
+		}
+		
+		
+		
+		
+		
+		.form_func  a.option{
+		  font-size:0.9em;
+		}
+		  .captcha{
+			display:inline-flex;
+            position:relative;			
+		  }
+		  
+		  .captcha > a.reset_capture{
+			position:absolute;  
+		    right:-6px;
+			top:-7px; 
+		  }
+		  
+		  #reg_captcha_input{ width:80px; }
+		  .captcha > img{ width:80px; height:40px; }
+		  
+		#reg_submit,#reg_process{
+		  flex:1;
+		  display:flex;
+		  justify-content:space-between;		  
+		}
+		#reg_process{
+		  display:none;	
+		}
+		
+	#check_form{display:block;}
+	#recover_form{display:none;}
+	
+
+/* [ LANDING BODY DOM ] */
+  .system_body_area{
+    min-height:350px;  
+    background-color:#eee;
+	position:relative;
+	z-index:1;
+  }	  
+
+	.information-block{
+	  display:flex;	
+	}
+
+	.information-block > div{
+	  margin:0 10px;
+	}
+
+	.information-block > div > h1{
+	    font-size:1.2em;
+	    border-bottom:1px #CDCDCD solid;
+	    margin:10px 0;
+	    padding:10px 0;
+	    position:relative;
+	  }
+
+	.information-block > div > h1 > span.more{
+	    font-size:0.8em;
+	    position:absolute;
+	    right:5px;
+	  }
+	
+	  .billboard{
+	    flex:0 0 50%;
+	  }
+  
+      /* zong descrip */
+	  .zong_descrip{
+		display:flex;
+        flex-wrap:wrap;	
+        justify-content:space-between;		
+	  }
+	    .zong_set{
+		  display:inline-flex;
+          width:250px;
+          margin:5px;  		  
+		}
+        
+		.zong_set > .cover{
+		  width:80px;
+          display:flex;
+          align-items:center;
+          justify-content:space-around; 		  
+		}
+		.zong_set > .cover > img{
+		  box-shadow:0 2px 5px 1px rgba(0 ,0 ,0 ,0.5);	
+		}
+		
+		.zong_set > .intro{
+		  flex:1;	
+		  padding-left:5px;
+		}
+		  .intro > h3{ margin-bottom:5px;}
+		  .intro > h3 > .ztitle{color:#752100;}
+		  .intro > .descrip{
+			font-size:0.9em;  
+		  }
+		  
+		
+  
+	  /* post list */ 
+	   
+	  #announcement[more='0'] > .news_block > div:nth-child(n+6){ display:none; }
+	  #announcement[more='1'] > .news_block > div{ display:block; }
+	  
+	  #announcement #act_switch_post_mode{ font-family: monospace;}
+	  #announcement[more='0'] #act_switch_post_mode > i.hide{display:none;}
+	  #announcement[more='1'] #act_switch_post_mode > i.more{display:none;}
+	  
+	  
+	    .news_block{ }
+		  .post{
+			margin-bottom:10px;	
+			padding:10px;
+			border-bottom:1px #CDCDCD solid;
+			border-radius:5px;
+			position:relative;
+			cursor:pointer;
+		  }
+		  
+		  @keyframes myanimation {
+			0% { border-bottom:1px #CDCDCD solid; }
+			/*80%  { border:1px #e6b422 dotted; }*/
+			100% { border-bottom:1px #c9171e dashed; }
+		  }
+		   
+		  .post[top='1'] {
+			/* box-shadow: 0 1px 5px -1px rgba(0,0,0,0.3); */
+		  }  
+		   
+		  .post[mark='緊急通告'] {
+			animation: myanimation 0.5s 200; /* use myanimation 5s duration, 5 times */
+		  }
+		  
+		  .post > h2{ 
+			padding:5px 0;
+			position:relative;
+			display:flex;
+		  }
+		  
+		  .post > h2 > span{
+			display:inline-block;  
+		  }
+		  
+			.post_date{ 
+			  color:#eb6101;
+			}
+			.post_type{ margin:0 5px; font-weight:bold; }
+			.post_summary{  }
+			.post_organ{ 
+			  font-size:0.9em; 
+			  align-self:flex-end;
+			  flex:1;
+			  text-align:right;
+			}
+			
+			.post_rate{
+			  position:absolute; 
+			  display:block;
+			  width:0;
+			  height:22px;
+			  background-image:url(../image/mark_star.png);
+			  top:-21px;
+			  left:0;
+			  transform-origin:left;
+			  transform: scale(0.7);
+			}
+			
+		  div.post_content{
+			color:#595857;
+			display:none;
+		  }	
+
+      
+	
+/* [ LANDING POST POPOUT DOM ] */
+.system_announcement_area{
+  position:fixed;
+  top:10px; left:10px; right:10px; bottom:10px;	  
+  background-color:rgba(0,0,0,0.6);
+  display:none;
+  z-index:200;
+}
+  
+  .system_announcement_area > .container{
+	height:100%;  
+  }
+  
+  #announcement_block{
+	max-width:600px;  
+	height:80vh; /* fix IE11 */
+	min-height:80%;
+	margin:30px auto;  
+	background-color:#FFFFFF;
+	border-radius:5px;
+	display:flex;
+	flex-direction:column;
+	padding:0 10px ;
+  }
+
+  #announcement_block > h1{
+	position:relative;
+    flex:0 0 50px;
+  } 
+
+  #announcement_block > h1 > span.ann_close{
+	position:absolute;
+	right:10px;
+	top:10px;
+	font-size:1.5em;		
+  }
+  
+	.ann_header{
+	  display:flex; 
+	  align-items:flex-start;
+	  border-bottom:1px #cdcdcd solid;
+	  padding:10px 0;
+	}
+	  
+	  .ann_type{
+		font-size:0.9em;
+		padding:5px;
+		background-color:green;
+		color:#FFFFFF;
+		border-radius:5px;
+		width:80px;
+		text-align:center;
+	  }
+	  
+	  .ann_title{
+		flex:1;  
+		font-weight:bold;
+		font-size:1.1em;
+		padding:0 40px 0 10px;
+		min-height:20px;
+		line-height:1.2em;
+	  } 
+
+	.ann_contents{
+	  flex:1;
+      padding:15px 0;
+	  overflow-y:auto;
+	}
+	
+	.ann_contents > p{
+	  font-size:1em;
+	  line-height:1.5em; 
+	}
+	
+	
+	.ann_footer{
+	  border-top:1px #CDCDCD solid;
+	  display:flex;
+	  justify-content:space-between;
+	  align-items:center;
+	  font-size:0.8em;
+	  color:#7d7d7d;
+	  height:50px;
+	  flex:0 0 50px;
+	} 
+	  .ann_counter{
+		font-weight:bold;
+		font-size:2em;
+		padding-right:20px;
+	  }     
+	
+			

@@ -1,0 +1,7 @@
+conf/server_config.php
+conf/system_config.php
+mvc/lib/*
+userProfile/*
+*.log
+*.tmp
+systemPaser/*

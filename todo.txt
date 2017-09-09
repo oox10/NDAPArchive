@@ -1,0 +1,48 @@
+TODO:
+
+
+[admin]
+ACCOUNT 
+- 過期自動renew
+
+STAFF : 
+- 角色參數設定 (presmission_matrix)
+- 編輯權限
+- 通用參數設定 - O
+- 批次動作處理 - O
+- 搜尋式資料介面(search,page) - O
+- 客戶欄位 - O
+- 新增帳號記數 - O
+- 新增帳號 - O 
+- 上下切換 - O
+
+JOBS : 
+- mail crontab
+- new account alert
+
+META : 
+- bath config - O
+- mp3 play - O
+- image resize 
+- member photo
+- priority
+- doupdate
+- delete
+- create
+- meta order by
+- bath export
+- date search 
+
+RECORD
+
+EXPORT
+
+[client]
+- video view - O
+- read priority - O:差會內IP設定
+- privacy setting 
+
+[service]
+- referenct : video to archive
+- reference : photo to member
+- import: account data
