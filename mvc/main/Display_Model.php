@@ -78,7 +78,7 @@
 		    throw new Exception('_SYSTEM_ERROR_SERVER_IP_NOT_ALLOW');  		
 		  }
 		
-		  if( $meta['_view']=='限閱'||$meta['_view']=='會內' ){
+		  if( $meta['_view']=='會內' ){
 		  
 			$user_ip = filter_var($this->USER->UserIP , FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE);
 		    if( $this->USER->UserIP!='0.0.0.0' && strlen($user_ip)  ){

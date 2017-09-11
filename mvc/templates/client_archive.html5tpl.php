@@ -718,13 +718,13 @@
 					  <div class='result_body'>
 					    <div class='result_descrip'>
 						  <div class='result_text'>
-						    <?php echo  $meta['abstract']['apply']; ?>
+						    <img title='<?php echo $meta['@Portrait']['field']; ?>' src='<?php echo $meta['@Portrait']['value']; ?>' />
+							<?php echo  $meta['abstract']['apply']; ?>
 						  </div>
 						  <div class='result_source'>
 						    <?php echo isset($meta['@Source']) ? $meta['@Source']['value'] : ''; ?>
 						  </div>
 						</div>
-					  
 					  </div>
 					  <div class='result_floder'>
 						<div class='result_reference' >

@@ -1649,6 +1649,12 @@
 			  $Data_Result_Array[$i]['@Source']['value']	= $meta_refer['_sourcefrom'];	
 			  $Data_Result_Array[$i]['@Source']['match']	= false;
 			  
+			  $meta_dobj = json_decode($metadata[$search_result['_id']]['dobj_json'],true);
+			  
+			  $Data_Result_Array[$i]['@Portrait']['field']	= isset($meta_dobj['portrait']['name']) ? $meta_dobj['portrait']['name'] : '議員頭像';	
+			  $Data_Result_Array[$i]['@Portrait']['value']	= isset($meta_dobj['portrait']['source']) ? $meta_dobj['portrait']['source'] : 'theme/image/nopicture.png';	
+			  $Data_Result_Array[$i]['@Portrait']['match']	= false;
+			  
 			}else if($metadata[$search_result['_id']]['data_type'] == 'photo'){
 			  
 			  $meta_dobj = json_decode($metadata[$search_result['_id']]['dobj_json'],true); 	
