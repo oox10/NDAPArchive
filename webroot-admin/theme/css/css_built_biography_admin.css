@@ -1,6 +1,4 @@
-  
-  
-  
+   
   /*== [ Admin Built Css  ] ==*/
   div.system_loading_area{background-color:rgba(0,0,0,0);}
   
@@ -34,20 +32,37 @@
 			z-index:11;
 			margin:0;
 			padding:20px;
+			padding-bottom:10px;
 			display:flex;
 			flex-direction:column;
 			overflow:hidden;
 			overflow-y:auto;
 		  }
 			.record_header{
-			  flex: 0 0 50px;	
-			}  
+			  flex: 0 0 50px;
+			  display:flex;
+			  align-items:center;
+              position:relative;
+			}
+			  .record_tasks{
+				position:absolute;
+				right:0;
+			  }
+			
+			
 			.record_body{
 			  flex:1;
 			  overflow:hidden;
 			  overflow-y:auto;		  
 			}
-		  
+		     
+			.record_batch{
+			  border-top:1px #CDCDCD solid;
+			  flex:0 0 30px;
+              display:flex;
+              align-items:center;			  
+			} 
+			 
 			.built_initial{background:url('../image/built_status_initial.png');}
 			.built_editing{background:url('../image/built_status_editing.png');}
 			.built_finish{background:url('../image/built_status_finish.png');}
@@ -210,12 +225,16 @@
 				  flex:1;	
 				  display:flex;	
 				  flex-wrap:wrap;
+				  justify-content:space-between;
 				}
-				.data_config > div.data_col{
-				  flex:1 1 100%;	
+				.data_config > div.data_col:nth-child(1){
+				  width:120px;
 				  display:inline-flex;	
 				}
-				
+				.data_config > div.data_col:nth-child(2){
+				  flex:1;
+				  display:inline-flex;	
+				}
 				
 				.system_meta > div.data_col._refer > label::after{
 				  content:"r";	
@@ -238,7 +257,10 @@
 				div.data_value.mutile_fields > input{
 				  width:49%;	
 				}
-			
+			    
+				
+				
+				
             .mutile_col{
 			  display:flex;	
 			}			
@@ -356,93 +378,7 @@
 				display:block;  
 			  }
 			  
-			
-			
-			.arrange_meta{
-			  display:none;	
-			  background-color:#ffffff;	
-			  padding-bottom:10px;
-			}
-			.arrange_meta .data_value{
-			  padding:0 10px;
-			}
-		  
-			/* 欄位細部控制 */
-			input#META-id{width:50%;}
-			
-			
-			#doconf{
-			  display:flex;
-              justify-content:space-between; 			  
-			}
-			
-			#page_num_set{
-			  width:30%;	
-			  display:inline-flex;
-			  align-items:center;
-			  justify-content:space-between;			  
-			}
-			#page_num_set > input{ width:50px; text-align:center; padding:8px 0}
-			  span#page_num_checked{  color:#ea5550; }
-			  
-			#page_file_set{
-			  width:68%;	
-			  font-size:0.9em;	
-			  display:inline-flex;
-			  align-items:center;
-			  justify-content:space-between;
-			}
-			  
-			#page_file_set > .option{ 
-			  position:absolute;
-			  top:-5px;
-			}
-			  #page_file_putin > i{
-			    transform:rotate(-90deg) scaleY(-1);
-			  }
-			  #input_page_file_start{  right:160px;}
-			  #input_page_file_end{  right:0;}
-			
-			span#page_num_checked + #page_file_putin{display:none;}
-			span#page_num_checked[check='1'] + #page_file_putin{display:inline-block;}
-			
-			
-			input#page_file_start , input#page_file_end{width:178px;padding-right:15px}
-			
-			i.infield_name{
-			  position:absolute;
-			  top:10px;
-			  color:#333333;
-			}
-			
-			i#fds{ left:41%;}
-			i#fde{ right:10px;}
-			#BookNameField{
-			  flex:0 0 200px;	
-			}
-			#StageAndVolume{
-			  flex:0 0 100px;
-			  display:inline-flex;
-			  align-items:center;
-              justify-content:flex-end;			  
-			}
-			#META-StageNum,#META-VolumeNum{width:40px;}
-			
-			#col_chairman{ width:150px; }
-			#col_mamber_main{ flex:1; }
-			
-			._biography#META-mbr_refer{
-			  min-height:20em;	
-			  resize: vertical;			  
-			}
-			
-			#field_data_type{ flex:0 0 100px;}
-			
-			#archive_field_pagecount{flex:0 0 50px;}
-			
-			
-			
-		  .edit_information{
+		.edit_information{
 			border-top:1px #CDCDCD solid;
 			flex:0 0 30px; 
 			display:flex;
@@ -501,7 +437,32 @@
 				  top:5px;	
 				  right:5px;
 				  font-size:0.8em;
-				}
+				}	
+			
+			.arrange_meta{
+			  display:none;	
+			  background-color:#ffffff;	
+			  padding-bottom:10px;
+			}
+			.arrange_meta .data_value{
+			  padding:0 10px;
+			}
+		  
+			/* 欄位細部控制 */
+			input#META-id{width:50%;}
+			
+			#META-mbr_refer{height:17em;}
+			#DOBJ-portrait{ 
+			  height:150px; 
+			  width:120px;
+			  display:inline-flex;
+			  align-items:center;
+			  justify-content:center;
+			  overflow:hidden;
+			  margin:5px 10px;
+			}
+			#DOBJ-portrait > img{height:100%;}
+		  
 	  
       /*===================*/
 	  /*   內文編輯區塊   */
@@ -534,30 +495,15 @@
 	    
 		div.editor_information{
 		  flex:0 0 30px;
-          		  
 		}
 		
 			
 	  /*===================*/
 	  /*   影像控制區塊   */
+	  /*   傳記資料無     */
 	  /*===================*/
-	  
-	  
-	  div.data_dobj_continer{
-		position:absolute;
-        top:0;
-        left:0;
-        bottom:0;
-        right:0;
-        background-color:rgba(0,0,0,0.7);
-        z-index:10;		
-		overflow:hidden;
-		padding:10px;
-	  }
-	    
-	  
-	 
-    
+	   
+	
 	/* 影像loading */
 	#main_page_loading{
       position:absolute;

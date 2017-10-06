@@ -160,10 +160,14 @@
 				    <option value='view/會內' title='數位檔案僅提供登入帳號並限制會內IP閱覽'>會內閱覽</option>
 				    <option value='view/不開放' title='不提供數位檔案閱覽'>不開放閱覽</option>
 				  </optgroup>
+				  <optgroup label='同步平台' >
+				    <option value='sync/1' title='同步於地方議會議事錄開放平台' disabled>從平台上架</option>
+				    <option value='sync/0' title='於地方議會議事錄開放平台下架' disabled>從平台下架</option>
+				  </optgroup>
 				  <?php endif; ?>
 				  
 				  <optgroup label='匯出勾選' >
-				    <option value='export' disabled>匯出excel</option>
+				    <option value='export' title='匯出勾選資料' >匯出excel</option>
 				  </optgroup>
 				</select>
 				<button type='button' class='active' id='act_execute_batch'>執行</button>
@@ -275,8 +279,13 @@
 					  
 					 
 					    <div class='system_info'>
-					      <div class='meta_field'> <label>最後更新</label>
+					      <div class='meta_field'> 
+						    <label>最後更新</label>
 					        <div class='mvalue'><?php echo  $data['_db']['@time']; ?>  @ <?php echo  $data['_db']['@user']; ?></div>
+					      </div>
+						  <div class='meta_field'> 
+						    <label>同步平台</label>
+					        <div class='mvalue'><?php echo  $data['_db']['sync'] ? '已' : '未'; ?>上傳開放資料平台 </div>
 					      </div>
 					    </div>
 					 
@@ -320,7 +329,7 @@
 					  <option value='<?php echo $page_conf['end'];?>' >尾頁</option>
 					</optgroup>
 					<optgroup label="-">
-					  <?php foreach($page_conf['all'] as $p=>$limit ): ?>
+					  <?php foreach($page_conf['jump'] as $p=>$limit ): ?>
 				      <option value="<?php echo $limit; ?>"  <?php echo $p==$page_conf['now'] ? 'selected':''; ?> ><?php echo 'P.'.$p; ?></option>
 				      <?php endforeach; ?>
                     </optgroup>					  

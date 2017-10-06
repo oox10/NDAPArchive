@@ -105,35 +105,24 @@
 		
 		<div class='main_content' >
 		  
-		  <!-- 影像顯示區 !多媒體型態無用 -->
-		  <div class='data_dobj_continer'></div>
 		  
 		  <!-- 資料編輯區 -->
 		  <div class='data_edit_continer'>	  
 			  
 			<!-- 列表 -->
 			<div class='data_record_block' id='record_selecter'>
-				<div class='record_header'>
-				  <span class='record_name'>建檔清單</span>
-				  <span class='record_option'>
-				 
-				    <button type='button' class='cancel'  id='act_task_return' title='退回工作項目'> 退回 </button>
-				    <button type='button' class='active'  id='act_task_checked' title='已確認建檔內容'> 確認 </button>
-				    <button type='button' class='active'  id='act_task_finish' title='完成本次建檔工作'> 遞交 </button>
-				    <button type='button' class=''  id='' title='遞交工作確認中' disabled > 已遞交 </button>
-				 	<a class='option view_switch' >  −  </a>
+				<h1 class='record_header'>
+				  <label class='record_title'>資料清單：<i class='_variable' id='META-BookName' ></i></label>
+				  <span  class='record_info'> 
+				    <?php echo count($elements); ?></i>  筆 ,
+				    狀態:
 				  </span>
-				</div> 
+				  <span  class='record_tasks'>  
+				  </span>
+				</h1> 
 				<div class='record_body'>
-				  <div class='record_control'>
-					<span class='record_result'>  
-					  共 <span> <?php echo count($elements); ?></span>  筆 /
-					  <a class='option' id='act_task_downlaod' title='下載建檔目錄'> <i class="fa fa-download" aria-hidden="true"></i> 下載建檔目錄</a>
-					</span>
-					<span class='record_function'>
-					</span>
-				  </div>
 				  <table class='record_list'>
+					
 					<tr class='data_field'>
 					  <td title='no'	>no</td>
 					  <td title='典藏號'>議員姓名</td>
@@ -160,6 +149,11 @@
 					<tbody class='data_target'></tbody>
 				  </table>
 				</div>
+				<div class='record_batch'>
+				  <a class='option' id='act_task_downlaod' title='下載建檔目錄'> <i class="fa fa-download" aria-hidden="true"></i> 下載建檔目錄</a>
+				  /
+				  <a class='option' id='act_task_downlaod' title='更新建檔目錄'> <i class="fa fa-upload" aria-hidden="true"></i> 更新建檔目錄</a>
+				</div>
 			</div>
 			  
 			<!-- 編輯 -->  
@@ -175,14 +169,10 @@
 				  <?php endif; ?>
 				</span>
 				<span class='editfunc'>
-				  
 				  <button id='save_current_meta'	title='儲存資料'><i class="fa fa-floppy-o" aria-hidden="true"></i></button>
-				  |
-				  <button id='create_new_item' 		title='新增一筆' ><i class="fa fa-file-o" aria-hidden="true"></i></button>
-				  <button id='import_arrange_meta'	title='帶入卷資料'><i class="fa fa-file-text-o" aria-hidden="true"></i></button>
-				  
+				  <span class='close option' id='edit_close' ><i class="fa fa-times" aria-hidden="true"></i></span>
 				</span>
-				<span class='close option' id='edit_close' ><i class="fa fa-times" aria-hidden="true"></i></span>
+				
 			  </div>
 			  <div class='edit_contents'>
 			  
@@ -201,8 +191,8 @@
 				  <div class='data_col '> 
 				    <label class='data_field _necessary'> 參數設定 </label>
 					<div class='data_config'> 
-					  <div class='data_col '> 
-					    <label>開放</label>
+					  <div class='data_col ' title='開放檢索'> 
+					    <label>檢索</label>
 						<div class='data_value'>   
 					      <label class="switch">
 						    <input type="checkbox" class="boolean_switch _update" name="META-_flag_open" id='META-_flag_open' data-save="1" data-default="0" checked="">
@@ -211,7 +201,7 @@
 					    </div>
 					  </div>
 					  <div class='data_col '> 
-					    <label>傳記閱覽設定</label>
+					    <label>閱覽設定</label>
 						<div class='data_value'>   
 					      <select id='META-_view' class='_variable _update'>
 						    <option value='開放' selected>開放 - 開放大眾閱覽</option>
@@ -239,6 +229,19 @@
                   </div>
 				  <div class='data_col '> <label class='data_field _necessary'> 議員任職 </label><div class='data_value'> <textarea type='text' class='_variable _update _photo' id='META-mbr_offer' default='' ></textarea> </div> </div>
 				  <div class='data_col '> <label class='data_field '> 參考資料 </label><div class='data_value'> <textarea type='text' class='_variable _update _biography' id='META-mbr_refer' default='' ></textarea> </div> </div>				  
+				  <div class='mutile_col'>
+				    <div class='data_col '> 
+				      <label class='data_field '> 議員頭像 </label>
+					  <div class='data_value' id='DOBJ-portrait'>
+					  </div> 
+					  <form id='pho_upload_form' method='post' action='index.php?act=Meta/mbrpho/' enctype="multipart/form-data" target="upload_target"  >
+					    <input type='file' name='file' id='act_portrait_upload' />
+					  </form>
+				      <iframe id="upload_target" name="upload_target" src="loader.php" style='display:none;'></iframe>
+					</div>
+				  </div>
+				  
+				  
 				</div>
 			  <?php endif; ?>			  
 			  	
@@ -255,13 +258,13 @@
 					<a class='option' title='關閉設定' id='act_close_setting' ><i class="fa fa-times" aria-hidden="true"></i></a>
 				  </div>
 				  <a class='option' title='進階設定' id='act_editor_setting' ><i class="fa fa-cog" aria-hidden="true"></i></a>
-				  <a class='option' title='完成編輯' id='finish_current_meta' ><i class="fa fa-check-square" aria-hidden="true"></i></a>
+				  
 				</div>
 				<div class='edit_logs' >
 				  紀錄：
-				  <span class='_variable' id='_update' ></span> 
+				  <span class='_variable' id='META-_timeupdate' ></span> 
 				  by 
-				  <span class='_variable' id='_editor' ></span> 
+				  <span class='_variable' id='META-_userupdate' ></span> 
 				</div>
 			  </div>
 			</div>
@@ -275,9 +278,7 @@
 		    <div class='biography_container'>
 			  <textarea type='text' class='_variable _update _biography' id='META-mbr_history' default='' ></textarea>
 			</div>
-		    <div class='editor_information'>
-			  
-			</div>
+		    <div class='editor_information'></div>
 		  </div>
 		  
 		  

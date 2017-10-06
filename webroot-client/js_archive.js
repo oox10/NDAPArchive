@@ -150,10 +150,6 @@
 	  
 	});
    
-	
-	
-	
-	
 	// 欄位搜尋模式變換
 	$('#search_field').change(function(){
 	  var search_input_mode = $(this).find('option:selected').attr('mode');
@@ -171,6 +167,19 @@
 	
 	// 增加條件
 	$('#add_search_term').click(function(){
+	  
+	  var empty_counter = 0;
+	  $(".additional_search:not('._template')").each(function(){
+		if($(this).find('input').val()==''){
+		  empty_counter++	
+		} 
+	  });
+	  
+	  if(empty_counter > 4){
+		system_message_alert('','請先使用空白條件欄');	
+	    return false;
+	  }
+	    
 	  var new_search = $('.additional_search._template').clone();
       new_search.removeClass('_template');
 	  new_search.find('input').val('');  	  
@@ -184,7 +193,7 @@
 		$(this).parents('li').remove();	  
 	  }else{
 		$(this).parents('li').children().val('');
-		system_message_alert('','不可以刪除第一個');  
+		//system_message_alert('','不可以刪除第一個');  
 	  }
 	});
 	
@@ -314,8 +323,7 @@
 		  }	  
 		});  
 	  }
-	  
-      return search;		
+	  return search;		
 	}
 	
 	

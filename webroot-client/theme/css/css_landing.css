@@ -2,7 +2,7 @@
 /* [ LANDING Border DOM ] */
 
   .system_border_area{
-	background-color:rgba(0,0,0,0.4);   
+	background-color:rgba(0,0,0,0.5);   
 	min-height:350px;
 	color:#FFFFFF;
 	position:relative;
@@ -17,11 +17,11 @@
 	/* introduction */
 	.introduction{
 	  width:50%;
-	  padding:40px 15px 0;
+	  padding:5px 15px 0;
 	}
 	.introduction > h1{
 	  font-size:2.8em;
-	  margin:10px 0;
+	  margin:20px 0;
 	  line-height:1.1em;
 	  letter-spacing:0.05em;
 	  display:flex;
@@ -29,8 +29,6 @@
 	}
 	
 	.introduction > h1 >span{flex:1;}
-	
-
 	
 	  
 	.introduction > p{
@@ -48,7 +46,7 @@
 	  padding:0 90px;	
 	  width:50%;
 	  position:absolute;
-	  top:0px;
+	  top:-45px;
 	  right:0;
 	  flex:10;
 	}
@@ -59,7 +57,7 @@
 		padding:0 5px;
 	  }
 	  ul.form_manual > li{
-		padding:15px 10px;	
+		padding:15px;	
 		background-color:rgba(103,39,45,1); 
 		border-radius:5px 5px 0 0;
 	  }
@@ -72,10 +70,12 @@
 		color:#FFFFFF;  
 	  }
 	    li#tosignup{
+		  width:200px;
 		  position:absolute;
-          right:5px; 		  
+          right:5px;
+          text-align:center; 		  
 		}
-	  
+	    
 	  
 	  .formblock{
 		background-color:rgba(103,39,45,0.9);     
@@ -211,10 +211,12 @@
 
 /* [ LANDING BODY DOM ] */
   .system_body_area{
-    min-height:350px;  
     background-color:#eee;
 	position:relative;
 	z-index:1;
+	padding-bottom:-100px;
+	flex:1;
+	margin-bottom:100px;
   }	  
 
 	.information-block{
@@ -252,7 +254,7 @@
 	    .zong_set{
 		  display:inline-flex;
           width:250px;
-          margin:5px;  		  
+          margin:5px 5px 20px;  		  
 		}
         
 		.zong_set > .cover{

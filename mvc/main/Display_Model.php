@@ -335,9 +335,21 @@
 		}
 		*/
 		
+		
+		
+		
 		$search_meta = json_decode($meta['search_json'],true);
 		$mark_person_array   = _SYSTEM_SEARCH_DATA_PERSON_MARK && isset($search_meta[_SYSTEM_SEARCH_MARK_PERSON_FIELD])  ? $search_meta[_SYSTEM_SEARCH_MARK_PERSON_FIELD] :array();
 		$mark_location_array = _SYSTEM_SEARCH_DATA_LOCATION_MARK && isset($search_meta[_SYSTEM_SEARCH_DATA_LOCATION_MARK]) ? $search_meta[_SYSTEM_SEARCH_MARK_LOCATION_FIELD] :array();
+		
+		/*
+		  隱私欄位處理
+          檔案資料須將abstract_mask 取代 abstract
+		*/
+		if($search_meta['zong'] == '檔案'){
+		  $search_meta['abstract'] =isset($search_meta['abstract_mask'] )&&$search_meta['abstract_mask'] ? $search_meta['abstract_mask'] :$search_meta['abstract'];	
+		  unset($search_meta['abstract_mask']);
+		}
 		
 		
 		foreach($search_meta as $meta_field => $meta_value){
@@ -637,8 +649,8 @@
 		  if(isset($DobjConf['position']) && count($DobjConf['position'])){
 		    foreach($DobjConf['position'] as  $order => $doinfo){
 			  $media_list[] = [
-			    'code'=> rawurlencode(self::iencode($New_Encode_Seed,$order)),
-				'file'=>$doinfo['file'],
+			    'code' => rawurlencode(self::iencode($New_Encode_Seed,$order+1)),
+				'file' =>$doinfo['file'],
 				'thumb'=>$object['InStoreNo'].'/'.$doinfo['file'].'-'.str_replace(':','',$doinfo['pointer']['stime']).'.jpg',
 				'stime'=>$doinfo['pointer']['stime'],				
 			    'etime'=>$doinfo['pointer']['etime']				
@@ -686,7 +698,7 @@
 		    $Image_File = file_get_contents(_SYSTEM_DIGITAL_LIST_BUFFER.$StoreNo.'_list.tmp');  
 			$Image_List = explode("\n",$Image_File);
 			array_shift($Image_List);
-		  
+		    
 			if(count($Image_List) && $Image_List[0] != _SYSTEM_ERROR_IMAGE_NAME){
 		   
 			  if( $imgCode && isset($Image_List[self::idecode($imgDecodeKey,rawurldecode($imgCode))-1])){  
@@ -710,6 +722,10 @@
 					case 'local':
 					  $Page_Addr = $imgAccessAddr.$image_file;
 					  $file_address= is_file($Page_Addr) ? $Page_Addr : false;
+					  
+					  var_dump($file_address);
+					  
+					  
 					  break; 
 			
 					case 'ftp':
@@ -1056,7 +1072,7 @@
 		
 		$Image_Access_Data['stno']= $DobjAccessNo;
 		$Image_Access_Data['count']= $image_num;
-		$Image_Access_Data['addr'] = $Folder_Access_Address.'/';
+		$Image_Access_Data['addr'] = $Folder_Access_Address;
 		$Image_Access_Data['list']  = $Image_List;
 		$Image_Access_Data['page_up']  = $page_up;
 		$Image_Access_Data['page_now'] = $PageNum;

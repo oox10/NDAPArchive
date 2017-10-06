@@ -34,20 +34,37 @@
 			z-index:11;
 			margin:0;
 			padding:20px;
+			padding-bottom:10px;
 			display:flex;
 			flex-direction:column;
 			overflow:hidden;
 			overflow-y:auto;
 		  }
 			.record_header{
-			  flex: 0 0 50px;	
-			}  
+			  flex: 0 0 50px;
+			  display:flex;
+			  align-items:center;
+              position:relative;
+			}
+			  .record_tasks{
+				position:absolute;
+				right:0;
+			  }
+			
+			
 			.record_body{
 			  flex:1;
 			  overflow:hidden;
 			  overflow-y:auto;		  
 			}
-		  
+		     
+			.record_batch{
+			  border-top:1px #CDCDCD solid;
+			  flex:0 0 30px;
+              display:flex;
+              align-items:center;			  
+			} 
+			 
 			.built_initial{background:url('../image/built_status_initial.png');}
 			.built_editing{background:url('../image/built_status_editing.png');}
 			.built_finish{background:url('../image/built_status_finish.png');}
@@ -563,12 +580,25 @@
 			div.mcontroler{
 			  background-color:rgba(0,0,0,0.3);  
 		      border-radius:3px;
-			  min-height:30px;
+			  min-height:35px;
 			  display:flex;
 			  align-items:center;
+			  justify-content:space-between;
 			  padding:0 5px;
 			}
-		  
+		      #adfile-project{ 
+			    display:inline-flex; 
+			    align-items:center;
+			  }
+			  #adfile-project *{ 
+			    padding:5px 0;
+                height:26px;
+                border:0px;				
+			  }
+			  #adfile-project > input{ width:80px; text-align:center;}
+			  #adfile-project > button{ width:60px; font-size:0.8em; color:#FFFFFF; }
+			  #adfile-project > select{ border-radius:3px 0 0 3px; border-right:1px #cdcdcd dotted; }
+			  
 		  ul.media_queue_block{
 			width:150px;
             height:100%;			

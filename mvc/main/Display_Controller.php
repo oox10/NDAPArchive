@@ -81,7 +81,6 @@
 	  $img_encodekey= isset($_SESSION[_SYSTEM_NAME_SHORT]['Image_Encode_Key']) ? $_SESSION[_SYSTEM_NAME_SHORT]['Image_Encode_Key'] : '';
 	  $img_block_set= isset($_SESSION[_SYSTEM_NAME_SHORT]['Image_Block_Set']) ? $_SESSION[_SYSTEM_NAME_SHORT]['Image_Block_Set'] : '';
 	  $dobj_conf = isset($_SESSION[_SYSTEM_NAME_SHORT]['DOBJCONF']) ? $_SESSION[_SYSTEM_NAME_SHORT]['DOBJCONF']: array();
-	  
 	  $result = $this->Model->Decode_Image_Code( $PageCode , $img_storeno , $img_address , $img_encodekey, $img_block_set , $dobj_conf);
 	  self::data_output('media','',$this->Model->ModelResult); 
 	}

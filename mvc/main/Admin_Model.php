@@ -3,7 +3,9 @@
     
 	/***--  Initial  --***/
 	public	$ModelResult;  //save model result data 
+	public  $ModuleFinalAction;
 	protected  $USER;
+	
 	
 	public function __construct(){
 	  $this->db_connect();
@@ -248,7 +250,7 @@
 	  if(preg_match("/(FROM|UPDATE|DELETE)\s+([\w\_\d]+)\s+(LEFT.*|SET.*)?WHERE/",$QuerySQLString,$pattern)){
 		$table_name = $pattern[2];
         if(isset($user_pri_map[$table_name])){
-		  $filter_condition = '('.join(' OR ',$user_pri_map[$table_name]).')';
+		  $filter_condition = '('.join(' AND ',$user_pri_map[$table_name]).')';
 		  $sql_width_permission = str_replace($pattern[0],$pattern[0].' '.$filter_condition.' AND' ,$QuerySQLString); 
 		} 
 	  }
@@ -256,8 +258,6 @@
 	  if(LOGS_FILTER_SQL_LOGS_FLAG){
 		file_put_contents(_SYSTEM_SQL_FILTER_LOGS, date('c').'		'.$sql_width_permission."\n",FILE_APPEND);  
 	  }
-	  
-	  
 	  
 	  return $sql_width_permission; 
 	}
@@ -298,10 +298,10 @@
 	  $DB_OBJ->bindValue(':acc_ip' ,	$acc_ip ? $acc_ip : '');
 	  $DB_OBJ->bindValue(':acc_act',	$ControlerAction);
 	  $DB_OBJ->bindValue(':acc_url',	$acc_url);
-	  $DB_OBJ->bindValue(':session',	isset($_SESSION) ? serialize($_SESSION):'');
+	  $DB_OBJ->bindValue(':session',	isset($_SESSION[_SYSTEM_NAME_SHORT]) ? serialize($_SESSION[_SYSTEM_NAME_SHORT]):'');
 	  $DB_OBJ->bindValue(':request',	isset($_REQUEST) ? serialize($_REQUEST) : '');
 	  $DB_OBJ->bindValue(':acc_from',	isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER']:'' );
-	  $DB_OBJ->bindValue(':result',		isset($this->ModelResult['action']) ? serialize($this->ModelResult['action']) : '');
+	  $DB_OBJ->bindValue(':result',		isset($this->ModuleFinalAction) && !$this->ModuleFinalAction ? serialize($this->ModelResult) : 'success');
 	  $DB_OBJ->bindValue(':agent',	    isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT']:'');
 	  $DB_OBJ->execute();
 	}

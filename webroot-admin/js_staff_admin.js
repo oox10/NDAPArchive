@@ -3,6 +3,31 @@
   
   $(window).on('load',function () {   //  || $(document).ready(function() {		
 	
+	
+	//-- submit condition
+	function module_page_rebuilt(){
+      
+	  var parameter 	= {};
+	  
+	  // get data group  
+	  var record_mode = $("input[name='data_type']:checked").val();
+	  
+	  // get data search 
+	  parameter['condition'] = $('#data_search_condition').val();	  
+	  
+	  // get data order
+	  if($(".order_by[mode != '0']").length){
+		parameter['orderby']   = {'field':$(".order_by[mode!='0']").attr('order'),'mode':$(".order_by[mode!='0']").attr('mode') , 'name':$(".order_by[mode!='0']").attr('name') };  
+	  }
+	  
+	  // get page config
+	  var pager = $('.record_view').val();
+	  
+	  var passer_data	= encodeURIComponent(Base64.encode(JSON.stringify(parameter)));
+	  location.href='index.php?act=Staff/index/'+record_mode+'/'+pager+'/'+passer_data;  
+	}
+	
+	
 	//-- datepicker initial
 	$("#date_open,#date_access").datepicker({
 	    dateFormat: 'yy-mm-dd',
@@ -19,8 +44,9 @@
 		$('#data_search_condition').focus();
 		return true;  
 	  }	
-	  location.href='index.php?act=Staff/index/'+$(this).val();	
+	  module_page_rebuilt();
 	});
+	
 	
 	//-- data search
 	$('#act_record_search').click(function(){
@@ -29,12 +55,19 @@
 		system_message_alert('','請輸入搜尋條件');
         $('#data_search_condition').focus();
         return false; 		
-	  }	
-
-      var condition = search.split('&');
-	  var passer_data  = encodeURIComponent(Base64.encode(JSON.stringify(condition)));
-	  location.href='index.php?act=Staff/index/search/'+$('.record_view').val()+'/'+passer_data;  
+	  }
+	  module_page_rebuilt()
 	});
+	
+	//-- data order by 
+	$('.order_by').click(function(){
+	  var order_by_mode  = parseInt($(this).attr('mode'));
+	  var order_by_next  = ((order_by_mode+1)%3);	
+      $('.order_by').attr('mode','0');
+	  $(this).attr('mode',order_by_next);
+      module_page_rebuilt();
+	});
+	
 	
 	//-- select all data
 	$('.act_select_all').change(function(){
@@ -52,6 +85,13 @@
 	
 	//-- 設定分頁 資料超過上萬，分頁自訂
 	$(document).off('click','.page_to');
+	$(document).off('change','.record_view');
+	
+	$('.record_view').change(function(){
+	  var link = location.search.replace('/#.*?$/','').split('/');
+	  link[3] = $(this).val();
+	  location.search = link.join('/');
+	});
 	
 	$('.page_to').click(function(){
 	  if(!$(this).attr('page')){
@@ -79,6 +119,12 @@
 	
 	
 	
+	//-- record order 
+	$('#order_by_regist').click(function(){
+       		
+	})
+	
+	
 	//-- admin staff get user data
 	$(document).on('click','._data_read',function(){
 	  
@@ -99,7 +145,8 @@
 	  initial_record_editer();
 	  
 	  if( user_no=='_new' ){
-	    dom_record.addClass('_target');
+	    
+		dom_record.addClass('_target');
 		data_orl = {};
 		
 		$('#user_id').prop('readonly',false);

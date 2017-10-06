@@ -18,6 +18,7 @@
 	<script type="text/javascript" src="tool/jquery-mousewheel-3.1.13/jquery.mousewheel.min.js"></script>
 	
 	<script type="text/javascript" src="tool/canvasloader-min.js"></script>	
+	<script type="text/javascript" src="tool/html2canvas.js"></script>	  	 
 	<script type="text/javascript" src="tool/jScrollPane/jScrollPane_Group.js"></script>
 	
 	<script type="text/javascript" src="js_library.js"></script>
@@ -50,7 +51,7 @@
   </head>
   
   <body>
-	<div class='system_main_area'>
+	<div class='system_body_area'>
 	  
 	  <div class='system_display_area'>
 	    <!-- 系統內容 -->
@@ -162,7 +163,7 @@
 		<div class='feedback_block'>
 		<div class='feedback_header tr_like' >
 		  <span class='fbh_title'> 系統回報 </span>
-		  <a class='fbh_option' id='act_feedback_close' title='關閉' ><i class='mark16 pic_close'></i></a>
+		  <a class='fbh_option' id='act_feedback_close' title='關閉' ><i class="fa fa-times" aria-hidden="true"></i></a>
 		</div>
 		<div class='feedback_body' >
 		  <div class='fb_imgload'> 建立預覽中..</div>
@@ -185,12 +186,12 @@
 			<textarea  class='feedback_content'  name='fbd_content'></textarea>
 		  </div>
 		</div>
-		<div class='feedback_bottom tr_like' >
-		  <a class='sysbtn btn_feedback' id='act_feedback_cancel' > <i class='mark16 pic_account_off'></i> 取 消 </a>
-		  <a class='sysbtn btn_feedback' id='act_feedback_submit' > <i class='mark16 pic_account_on'></i> 送 出 </a>		
+		<div class='feedback_bottom' >
+		  <button type='button' class='cancel btn_feedback' id='act_feedback_cancel' > <i class="fa fa-trash-o" aria-hidden="true"></i>  取 消 </button>
+		  <button type='button' class='active btn_feedback' id='act_feedback_submit' > <i class="fa fa-paper-plane-o" aria-hidden="true"></i>  送 出 </button>		
 		</div>
 		</div>
-	</div>  
+	</div>    
     
 	<!-- System Loading -->
     <div class='system_loading_area'>
@@ -202,7 +203,30 @@
 	      </div>
 	    </div>
 	</div>
-	
-	
+	<script type="text/javascript">
+	//-- 若網頁內容更換，則將所有object load 停止
+	$(window).bind('beforeunload', function() {
+	  if($('video').length){
+		$('video').attr('src','');
+	    $('video').load();
+	    window.stop();  
+	  }
+	});
+	/*
+	$(window).blur(function(e) {
+      // Do Blur Actions Here
+	  var video = document.getElementById('myVideo');
+      video.pause();
+	  if($('video').length){
+		var orlsrc = $('video').attr('src');
+		$('video').attr('src','');
+	    $('video').load();
+	    window.stop();  
+	    $('video').attr('src',orlsrc);
+	  
+	  }
+	});
+	*/
+	</script>
   </body>
 </html>  

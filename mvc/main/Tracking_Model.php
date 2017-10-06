@@ -22,27 +22,8 @@
 	  try{
 		
 		// 查詢資料庫
-		if( isset($this->USER->PermissionNow['group_roles']['R00']) && $this->USER->PermissionNow['group_roles']['R00'] ){  
-		  //1. R00 可取得所有回報資料
-		  $DB_OBJ = $this->DBLink->prepare(  SQL_AdTrack::ADMIN_REPORT_SELECT_SYSTEM_REPORTS() );	
-		  $result['mode']   =  'admin';
-		
-		}else if(isset($this->USER->PermissionNow['group_roles']['R01'])){ 
-		  
-		  //1. R01 可取得所有回報資料
-		  $DB_OBJ = $this->DBLink->prepare(  SQL_AdTrack::ADMIN_REPORT_SELECT_SYSTEM_REPORTS() );	
-		  $result['mode']   =  'admin';
-		  
-		  // R01現為系統管理  // 2. R01 可取得群組回報資料 
-		  //$DB_OBJ = $this->DBLink->prepare(parent::SQL_Permission_Filter(SQL_AdTrack::ADMIN_REPORT_SELECT_GROUP_REPORTS()));	
-		  //$DB_OBJ->bindValue(':group_code', $this->USER->PermissionNow['group_code'] );
-		
-		}else{
-		  //3. 其他可取得自己的回報資料
-		  $DB_OBJ = $this->DBLink->prepare(parent::SQL_Permission_Filter(SQL_AdTrack::ADMIN_REPORT_SELECT_USER_REPORTS())); 
-		  $DB_OBJ->bindValue(':user_id',$this->USER->UserID);
-		
-		}
+		$DB_OBJ = $this->DBLink->prepare(  parent::SQL_Permission_Filter(SQL_AdTrack::ADMIN_REPORT_SELECT_SYSTEM_REPORTS()) );	
+		$result['mode']   =  'admin';  
 		
 		if(!$DB_OBJ->execute()){
 		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');  
@@ -96,7 +77,7 @@
 		
 		// 取得資料
 		$report_data = NULL;
-		$DB_GET	= $this->DBLink->prepare( SQL_AdTrack::ADMIN_REPORT_GET_REPORT_DATA() );
+		$DB_GET	= $this->DBLink->prepare(  parent::SQL_Permission_Filter(SQL_AdTrack::ADMIN_REPORT_GET_REPORT_DATA()) );
 		$DB_GET->bindParam(':fno'   , $DataNo , PDO::PARAM_INT);	
 		if( !$DB_GET->execute() || !$report_data = $DB_GET->fetch(PDO::FETCH_ASSOC)){
 		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');

@@ -52,6 +52,8 @@
 	$dobj_conf  	= isset($this->vars['server']['data']['resouse']['dobj_config'])	? $this->vars['server']['data']['resouse']['dobj_config'] : array();  
 	$elements       =  isset($this->vars['server']['data']['resouse']['meta_list']) 		? $this->vars['server']['data']['resouse']['meta_list'] : array(); 
 	
+	$user_project   = isset($this->vars['server']['data']['resouse']['user_project']) 		? $this->vars['server']['data']['resouse']['user_project'] : array();  
+	
 	//
 	//$data_count 	= count($data_list);
 	//$data_limit 	= isset($this->vars['server']['data']['record'])    ? $this->vars['server']['data']['record']['limit'] : array('start'=>date('Y-m-d',strtotime('-7 day')),'end'=>date('Y-m-d'));
@@ -70,6 +72,8 @@
 	
 	
 	?>
+	<meta id='DATAROOT' data-set='<?php echo $dobj_conf['root'];?>' ></meta>
+	<meta id='DOFOLDER' data-set='<?php echo $dobj_conf['folder'];?>'  ></meta>
   </head>
   
   
@@ -95,26 +99,22 @@
 			  
 			<!-- 列表 -->
 			<div class='data_record_block' id='record_selecter'>
-				<div class='record_header'>
-				  <span class='record_name'>建檔清單</span>
-				  <span class='record_option'>
-				 
-				    <button type='button' class='cancel'  id='act_task_return' title='退回工作項目'> 退回 </button>
+				<h1 class='record_header'>
+				  <label class='record_title'>資料清單：<i class='_variable' id='META-BookName' ></i></label>
+				  <span  class='record_info'> 
+				    <?php echo count($elements); ?></i>  筆 ,
+				    狀態:
+				  </span>
+				  <span  class='record_tasks'>  
+					<!--
+					<button type='button' class='cancel'  id='act_task_return' title='退回工作項目'> 退回 </button>
 				    <button type='button' class='active'  id='act_task_checked' title='已確認建檔內容'> 確認 </button>
 				    <button type='button' class='active'  id='act_task_finish' title='完成本次建檔工作'> 遞交 </button>
 				    <button type='button' class=''  id='' title='遞交工作確認中' disabled > 已遞交 </button>
-				 	<a class='option view_switch' >  −  </a>
+				    -->
 				  </span>
-				</div> 
+				</h1> 
 				<div class='record_body'>
-				  <div class='record_control'>
-					<span class='record_result'>  
-					  共 <span> <?php echo count($elements); ?></span>  筆 /
-					  <a class='option' id='act_task_downlaod' title='下載建檔目錄'> <i class="fa fa-download" aria-hidden="true"></i> 下載建檔目錄</a>
-					</span>
-					<span class='record_function'>
-					</span>
-				  </div>
 				  <table class='record_list'>
 					<tr class='data_field'>
 					  <td title='no'	>no</td>
@@ -141,6 +141,12 @@
 					</tbody>
 					<tbody class='data_target'></tbody>
 				  </table>
+				  
+				</div>
+				<div class='record_batch'>
+				  <a class='option' id='act_task_downlaod' title='下載建檔目錄'> <i class="fa fa-download" aria-hidden="true"></i> 下載建檔目錄</a>
+				  /
+				  <a class='option' id='act_task_downlaod' title='更新建檔目錄'> <i class="fa fa-upload" aria-hidden="true"></i> 更新建檔目錄</a>
 				</div>
 			</div>
 			  
@@ -158,13 +164,16 @@
 				</span>
 				<span class='editfunc'>
 				  
-				  <button id='save_current_meta'	title='儲存資料'><i class="fa fa-floppy-o" aria-hidden="true"></i></button>
 				  |
+				  <!--
 				  <button id='create_new_item' 		title='新增一筆' ><i class="fa fa-file-o" aria-hidden="true"></i></button>
 				  <button id='import_arrange_meta'	title='帶入卷資料'><i class="fa fa-file-text-o" aria-hidden="true"></i></button>
-				  
+				  <a class='option' title='完成編輯' id='finish_current_meta' ><i class="fa fa-check-square" aria-hidden="true"></i></a>
+				  -->
+				  <button id='save_current_meta'	title='儲存資料'><i class="fa fa-floppy-o" aria-hidden="true"></i></button>
+				  <span class='close option' id='edit_close' ><i class="fa fa-times" aria-hidden="true"></i></span>
 				</span>
-				<span class='close option' id='edit_close' ><i class="fa fa-times" aria-hidden="true"></i></span>
+				
 			  </div>
 			  <div class='edit_contents'>
 			  
@@ -201,8 +210,8 @@
 						  </label>  
 					    </div>
 					  </div>
-					  <div class='data_col '> 
-					    <label>開放</label>
+					  <div class='data_col ' title='開放檢索'> 
+					    <label>檢索</label>
 						<div class='data_value'>   
 					      <label class="switch">
 						    <input type="checkbox" class="boolean_switch _update" name="META-_flag_open" id='META-_flag_open' data-save="1" data-default="0" checked="">
@@ -348,13 +357,12 @@
 					<a class='option' title='關閉設定' id='act_close_setting' ><i class="fa fa-times" aria-hidden="true"></i></a>
 				  </div>
 				  <a class='option' title='進階設定' id='act_editor_setting' ><i class="fa fa-cog" aria-hidden="true"></i></a>
-				  <a class='option' title='完成編輯' id='finish_current_meta' ><i class="fa fa-check-square" aria-hidden="true"></i></a>
 				</div>
 				<div class='edit_logs' >
 				  紀錄：
-				  <span class='_variable' id='_update' ></span> 
+				  <span class='_variable' id='META-_timeupdate' ></span> 
 				  by 
-				  <span class='_variable' id='_editor' ></span> 
+				  <span class='_variable' id='META-_userupdate' ></span> 
 				</div>
 			  </div>
 			</div>
@@ -368,8 +376,21 @@
 				  <source type='video/mp4' id='meta_media_play' src='' />
 				</video>
 				<div class='mcontroler'>
-				  <button><i class="fa fa-backward" aria-hidden="true"></i></button>
-				  <button><i class="fa fa-forward" aria-hidden="true"></i></button> 
+				  <div class='video_control'>
+				    <button class='act_video_time_control' data-second='-1' ><i class="fa fa-backward" aria-hidden="true"></i></button>
+				    <button class='act_video_time_control' data-second='1' ><i class="fa fa-forward" aria-hidden="true"></i></button> 
+				  </div>
+				  <div class='project_save' id='adfile-project' >
+				    <select  name='file_save_package' id='file_save_package' placeholder='打包檔名'  />
+					  <option value='' disabled selected >專案資料夾 </option>
+					<?php foreach($user_project as $spno=>$upoj):?>
+					  <option value='<?php echo $spno;?>'> <?php echo $upoj['name'].' ( '.$upoj['count'].' )'; ?> </option>
+					<?php endforeach;?>
+					</select>
+					<input type='input'  class='act_video_time_get' id='pjimport_stime'  placeholder='起' readonly />
+					<input type='input'  class='act_video_time_get' id='pjimport_etime'  placeholder='迄' readonly />
+					<button class='blue' id='act_adfile_package'>匯入</button>
+				  </div>
 				</div>
 			  </div>
 			  
@@ -420,8 +441,8 @@
 						  <img class='tti etime' src=' '>
 						</td>
 						<td class='tag_fname' >檔名</td>
-						<td class='tag_time' ><input type='text' class='pointer stime' value='' readonly disabled /> <a class='act_set_time option'><i class="fa fa-tag" aria-hidden="true"></i></a></td>
-						<td class='tag_time' ><input type='text' class='pointer etime' value='' readonly disabled /> <a class='act_set_time option'><i class="fa fa-tag" aria-hidden="true"></i></a></td>
+						<td class='tag_time' ><input type='text' class='pointer stime' value='' readonly  /> <a class='act_set_time option'><i class="fa fa-tag" aria-hidden="true"></i></a></td>
+						<td class='tag_time' ><input type='text' class='pointer etime' value='' readonly  /> <a class='act_set_time option'><i class="fa fa-tag" aria-hidden="true"></i></a></td>
 						<td class='tag_func' >
 						  <button type='button' class='cancel segment_dele' disabled ><i class="fa fa-trash" aria-hidden="true"></i></button>
 						  <button type='button' class='active segment_edit'><i class="fa fa-pencil" aria-hidden="true"></i><i class="fa fa-floppy-o" aria-hidden="true"></i></button>

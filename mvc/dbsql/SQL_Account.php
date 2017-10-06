@@ -77,7 +77,7 @@
 	
 	//-- 取得使用者群組資源篩選條件
 	public static function GET_GROUPS_ACCESS_RULES(){
-	  $SQL_String = "SELECT * FROM permission_rule WHERE mode='acl' AND ((limitto='group' AND (target=:gid OR target='*')) OR ( limitto='user' AND target=:user)) AND _open=1 AND _keep=1;";
+	  $SQL_String = "SELECT * FROM permission_rule WHERE mode='acl' AND ((limitto='group' AND (target=:gid OR target='*')) OR ( limitto='user' AND target=:user)) AND _open=1 AND _keep=1 ORDER BY prno ASC;";
 	  return $SQL_String;
 	}
 	

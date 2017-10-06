@@ -100,6 +100,8 @@
 		$DB_UGP->bindvalue(':creater','system');
 		$DB_UGP->execute();
 		
+		// 創造空間
+		self::Account_System_Space_Allocat('MEMBER',$uname);
 		
 		// 是否自動通過
 		$DB_CONF = $this->DBLink->prepare(SQL_Account::ACCOUNT_CONFIG_SIGNUP_AUTO_ACCEPT());
@@ -258,6 +260,7 @@
 		$DB_REG->bindValue(':user_status',5);
 		$DB_REG->bindValue(':user_pass',$user_pass);
 		$DB_REG->bindValue(':password' ,$regist_pass['regist_password01']);
+		
 		
 		// 完成啟動
 		if(!$DB_REG->execute()){

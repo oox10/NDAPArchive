@@ -280,6 +280,8 @@
 		  $result_source[$key]['_db']['auditint'] = $meta['_auditint'];
 		  $result_source[$key]['_db']['open'] = $meta['_open'];
 		  $result_source[$key]['_db']['view'] = $meta['_view']; 
+		  $result_source[$key]['_db']['sync'] = $meta['_sync']; 
+		  
 		}
 		
 		
@@ -461,6 +463,18 @@
 			continue;
 		  }
 		  
+		  
+		  // 執行logs
+		  $DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
+		  $DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
+		  $DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
+		  $DB_LOGS->bindValue(':identifier' , $meta['identifier']);
+		  $DB_LOGS->bindValue(':source' , json_encode($source));
+		  $DB_LOGS->bindValue(':update' , json_encode($meta_batch));
+		  $DB_LOGS->bindValue(':user' , $this->USER->UserID);
+		  $DB_LOGS->bindValue(':result' , 1);
+		  $DB_LOGS->execute();
+		  
 		  // 執行更新
 		  $result = self::ADMeta_Process_Meta_Update($meta['system_id']);
 		  if(!$result['action']){
@@ -482,13 +496,143 @@
 	
 	
 	
+	//-- Admin Meta Execute User Select Batch
+	// [input] : SelectedSids  :  encoed array string;
+	// [input] : Action        :  open / view / ;  !strtolower-Y
+	// [input] : Setting       :  (open):0/1 (view):開放/限閱/會內/關閉  ;
+	
+	public function ADMeta_Export_Selected($SelectedSids){
+		
+	  $result_key = parent::Initial_Result('batch');
+	  $result  = &$this->ModelResult[$result_key];
+	  try{  
+		
+		
+		$data_batch_counter = 0;
+		$data_selected = json_decode(base64_decode(str_replace('*','/',rawurldecode($SelectedSids))),true); 
+		
+		// check permission
+		if(  !intval($this->USER->PermissionNow['group_roles']['R00']) && !intval($this->USER->PermissionNow['group_roles']['R02']) ){
+		  throw new Exception('_SYSTEM_ERROR_PERMISSION_DENIAL');	
+		} 
+		
+		// check data
+		if(!count($data_selected)) throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		
+		
+		// get data set
+		$DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_META_SELECTED($data_selected));
+		if( !$DB_GET->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		$excel = [];
+		while($meta = $DB_GET->fetch(PDO::FETCH_ASSOC)){
+		  if(!isset($excel[$meta['zong']])) $excel[$meta['zong']]=[];
+		  $source_meta = json_decode($meta['source_json'],true);
+		  $excel[$meta['zong']][] =  $source_meta; 
+		  $data_batch_counter++;
+		}
+		
+		
+		// 建構 excel file
+		
+		$outputPHPExcel = new PHPExcel();	
+	    $objReader = PHPExcel_IOFactory::createReader('Excel2007');
+		foreach($excel as $sheet=>$data_list ){	
+			
+		  //php excel initial
+		  switch($sheet){
+		    case '檔案':		$excel_template = 'template_ndap_source_archive.xlsx'; break;
+		    case '公報':		$excel_template = 'template_ndap_source_meeting.xlsx'; break; 
+		    case '議事錄':	$excel_template = 'template_ndap_source_meeting.xlsx'; break;	 	
+		    case '議事影音': 	$excel_template = 'template_ndap_source_media.xlsx'; break;
+		    case '活動照片': 	$excel_template = 'template_ndap_source_photo.xlsx'; break;
+		    case '議員傳記': 	$excel_template = 'template_ndap_source_biography.xlsx'; break;
+		    default: $excel_template = $xlsx_temp; break;
+		  }
+			
+		  $objPHPExcel = $objReader->load(_SYSTEM_ROOT_PATH.'mvc/templates/'.$excel_template);
+		  $objPHPExcel->setActiveSheetIndex(0);
+		  $objPHPExcel->getActiveSheet()->setTitle($sheet);
+		
+		  $col = 0 ;
+		  $row = 3 ;
+			
+		  foreach( $data_list as $data){
+			$col = 0;
+			foreach($data as $f=>$v){
+			  if(preg_match('/^_/',$f)) break; 
+			  if(is_array($v)) $v = join(';',$v);
+			  if(!trim($objPHPExcel->getActiveSheet()->getCellByColumnAndRow($col,2))) break;
+			  $objPHPExcel->getActiveSheet()->getCellByColumnAndRow($col, $row)->setValueExplicit($v, PHPExcel_Cell_DataType::TYPE_STRING);  	
+			  $col++;
+			}
+			$row++;
+		  }
+		   
+		  $objClonedWorksheet = $objPHPExcel->getActiveSheet();
+		  $outputPHPExcel->addExternalSheet($objClonedWorksheet);
+		  $objPHPExcel->disconnectWorksheets();
+		  unset($objPHPExcel);
+		}	
+		  
+		  
+		$outputPHPExcel->setActiveSheetIndexByName('Worksheet');
+		$sheetIndex = $outputPHPExcel->getActiveSheetIndex();
+		$outputPHPExcel->removeSheetByIndex($sheetIndex);
+		$outputPHPExcel->setActiveSheetIndex(0);
+		
+		$excel_file_name =  _SYSTEM_NAME_SHORT.'_export_'.date('Ymd');
+		
+		$objWriter = PHPExcel_IOFactory::createWriter($outputPHPExcel, 'Excel2007');
+		$objWriter->save(_SYSTEM_USER_PATH.$this->USER->UserID.'/'.$excel_file_name.'.xlsx'); 
+		$outputPHPExcel->disconnectWorksheets();
+		unset($outputPHPExcel);
+		
+		// final
+		$result['data']['fname']   = $excel_file_name;
+		$result['data']['count']   = $data_batch_counter;
+		
+		$result['action'] = true;
+		
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
 	
 	
-	
-	
-	
-	
-	
+	//-- Admin Meta :Meta Batch Export XLSX 
+	// [input] : FileName  : logs_digital.note	
+	public function ADMeta_Access_Export_File( $FileName=''){
+	  
+	  $result_key = parent::Initial_Result('file');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+	    
+		if(!$FileName){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		} 
+		
+		$file_path = _SYSTEM_USER_PATH.$this->USER->UserID.'/'.$FileName.'.xlsx';
+		if(!file_exists($file_path)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		// final 
+		$result['data']['name']  = $FileName.'.xlsx';
+		$result['data']['size']  = filesize($file_path);
+		$result['data']['location']  = $file_path;
+		
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
 	
 	
 	
@@ -604,12 +748,14 @@
 	//-- Admin Meta : Get Meta Resouce
 	// [input] : BookNo  :  \w\d+;  全宗號
 	// [input] : DataNo  :  \d+;  系統序號
-	
-	
 	public function ADMeta_Get_Task_Resouse($BookNo='',$DataNo=0,$Mode='edit'){
       
 	  $result_key = parent::Initial_Result('resouse');
 	  $result  = &$this->ModelResult[$result_key];
+	  $lib_imagemagic =  _SYSTEM_ROOT_PATH.'mvc/lib/ImageMagick-7.0.3-7-portable-Q16-x64/convert.exe ';
+      $lib_ffmpeg 	  =  _SYSTEM_ROOT_PATH.'mvc/lib/ffmpeg-20161122-d316b21-win64-static/bin/ffmpeg.exe ';
+	  $lib_ffprobe    =  _SYSTEM_ROOT_PATH.'mvc/lib/ffmpeg-20161122-d316b21-win64-static/bin/ffprobe.exe ';
+	
 	  try{  
 		
 		// 檢查序號
@@ -648,6 +794,7 @@
 		if( !$DB_GET->execute() ){
 		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
 		}
+		
 		while($tmp = $DB_GET->fetch(PDO::FETCH_ASSOC)){
 		  $element  = $tmp;	
 		  $element['_search'] = json_decode($tmp['search_json'],true);
@@ -663,15 +810,30 @@
 		$digital_object_path = _SYSTEM_DIGITAL_FILE_PATH;
 		
 		if(isset($meta_dobj['dopath'])){
+	      
           $digital_object_path.= $meta_dobj['dopath'];
 		  $digital_object_path.= 'browse/';
 		  $digital_object_path.= $meta['collection'].'/';
 		
-		  if(is_dir($digital_object_path)){
-            $file_list = array_slice(scandir($digital_object_path),2);			
+		  // 取得數位物件設定
+		  $doprofileread = '';
+		  $doprofilepath =  _SYSTEM_DIGITAL_FILE_PATH.$meta_dobj['dopath'].'profile/'.$meta['collection'].'.conf'; 
+		  if(is_file( $doprofilepath )){
+			$doprofileread = file_get_contents($doprofilepath);	  
 		  }
 		  
-		  if( $meta['zong']=='公報' || $meta['zong']=='議事錄'){
+		  $dobj_profile = json_decode($doprofileread,true);
+		  
+		  // 若無數位檔案規劃設定
+		  if( !$dobj_profile || ( !isset($dobj_profile['items']) || !count($dobj_profile['items']))){
+			
+			// 掃描實體檔案 
+            if(is_dir($digital_object_path)){
+              $file_list = array_slice(scandir($digital_object_path),2);			
+		    }
+		  
+		    if( $meta['zong']=='公報' || $meta['zong']=='議事錄'){
+			  
 			  // 議事錄影像需要重新排序
 			  $book_page_list  = array();
 			  $ImageZnumArray  = array();
@@ -681,17 +843,17 @@
 			  $ImageAPnumArray = array();
 				
 			  foreach($file_list as $img){
-				if(preg_match('@-([\d_]+)\.jpg@',$img,$match) ){
+				if(preg_match('@-([\d_]+)\.(jpg|png)@',$img,$match) ){
 				  if(preg_match('/0000_/',$match[1])){
 					$ImageZnumArray[]=$img;
 				  }else{
 					$ImageNumeArray[]=$img;
 				  }  
-				}else if(preg_match('@-(0000_[\w\d]+)\.jpg@',$img)){
+				}else if(preg_match('@-(0000_[\w\d]+)\.(jpg|png)@',$img)){
 					$ImageINumArray[]=$img;
-				}else if(preg_match('@-(ca[\d]+)\.jpg@',$img)){
+				}else if(preg_match('@-(ca[\d]+)\.(jpg|png)@',$img)){
 					$ImageCNumArray[]=$img;
-				}else if(preg_match('@-(ap[\d]+)\.jpg@',$img)){
+				}else if(preg_match('@-(ap[\d]+)\.(jpg|png)@',$img)){
 					$ImageAPnumArray[]=$img;
 				}
 			  }
@@ -701,31 +863,124 @@
 			  $ImageNumeArray = array_merge( $ImageZnumArray , $ImageNumeArray );    //把影像編號00的排到最前面
 			  $ImageNumeArray = array_merge( $ImageCNumArray , $ImageNumeArray); 
 			  $dobj_list = $ImageNumeArray;
+		    
+			}else{
+			  $dobj_list = $file_list;	
+		    }
+            
 			
-		  }else{
-			$dobj_list = $file_list;	
-		  }
 			
+			// 建立數位物件設定檔
+			$do_conf = array('store'=>$digital_object_path  , 'saved'=>date('Y-m-d H:i:s') , 'items'=>[] );
+			foreach($dobj_list as $i=>$do){
+			  if(!file_exists($digital_object_path.$do)) continue;
+			  
+			  $file_type = strtolower(pathinfo($digital_object_path.$do,PATHINFO_EXTENSION));
+			  
+			  switch($file_type){
+				case 'jpg': case 'jpeg': case 'png': case 'gif':  
+				  list($imgw, $imgh) = getimagesize($digital_object_path.$do);
+			      $do_conf['items'][] = [
+			        'file' => $do,
+				    'width'=> $imgw,
+			        'height'=> $imgh,
+				    'size'=> filesize($digital_object_path.$do)
+			      ]; 
+				  break;
+				case 'mp3':
+				  
+				  $fconfig = [
+				    'file'   => $do,
+				    'width'  => 150,
+				    'height' => 150,
+				    'length' => 0,
+					'duration'=> 0,
+				    'thumb'  => $do.'.png',
+				    'order'  => ++$i,
+				    'update' => date('Y-m-d H:i:s'),
+				    'editor' => 'RCDH'
+				  ];  
+					
+				  $second=[];
+				  exec($lib_ffprobe .'-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '.$digital_object_path.$do ,$second); 
+				  $fconfig['length'] = intval(ceil($second[0]));
+				  $fconfig['duration'] = str_pad(intval($fconfig['length']/3600),2,'0',STR_PAD_LEFT).':'.str_pad(intval(intval($fconfig['length']%3600)/60),2,'0',STR_PAD_LEFT).':'.str_pad(intval($fconfig['length']%60),2,'0',STR_PAD_LEFT);
+				  $do_conf['items'][] = $fconfig;  
+				  break;
+				  
+				case 'mp4':
+				  
+				  $fconfig = [
+				    'file'   => $do,
+					'width'  => 0,
+					'height' => 0,
+					'length' => 0,
+					'duration'=> 0,
+					'thumb'  => $do.'.jpg',
+					'order'  => ++$i,
+					'update' => date('Y-m-d H:i:s'),
+					'editor' => 'RCDH'
+				  ];
+			      
+				  $result=[];
+				  exec($lib_ffprobe .'-v error -of flat=s=_ -select_streams v:0 -show_entries stream=height,width '.$digital_object_path.$do ,$result); 
+				  foreach($result as $attr){
+					list($a,$v) = explode('=',$attr);	
+					if(preg_match('/width/',$a)){
+					  $fconfig['width'] = intval($v);  
+					}else{
+					  $fconfig['height'] = intval($v);    
+					}
+				  }  
+					
+				  $second=[];
+				  exec($lib_ffprobe .'-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '.$digital_object_path.$do ,$second); 
+				  //echo "\n".$dopath.' : '. $second[0];
+				  $fconfig['length'] = intval(ceil($second[0]));
+				  $fconfig['duration'] = str_pad(intval($fconfig['length']/3600),2,'0',STR_PAD_LEFT).':'.str_pad(intval(intval($fconfig['length']%3600)/60),2,'0',STR_PAD_LEFT).':'.str_pad(intval($fconfig['length']%60),2,'0',STR_PAD_LEFT);
+				  $do_conf['items'][] = $fconfig;
+				  
+				  break;
+				
+				default: break;
+			  }
+			}
 			
+			// 取得數位物件設定
+		    $doprofilepath =  _SYSTEM_DIGITAL_FILE_PATH.$meta_dobj['dopath'].'profile/'.$meta['collection'].'.conf'; 
+		    file_put_contents($doprofilepath,json_encode($do_conf));
 			
-		  // 取得數位物件設定
-		  $doprofileread = '';
-		  $doprofilepath =  _SYSTEM_DIGITAL_FILE_PATH.$meta_dobj['dopath'].'profile/'.$meta['collection'].'.conf'; 
-		  if(is_file( $doprofilepath )){
-			$doprofileread = file_get_contents($doprofilepath);	  
-		  }
-		  $dobj_profile = json_decode($doprofileread,true);
-		  $dobj_profile = $dobj_profile ? $dobj_profile : $dobj_list;
+			$dobj_config = $do_conf['items'];
 		  
-		 
+		  }else{
+			$dobj_config = $dobj_profile['items'];  
+		  }
+		  
+		  $dobj_config = $dobj_config ? $dobj_config : $dobj_list;
+		  
 		  $result['data']['dobj_config']['root']   = $meta_dobj['dopath'];
 		  $result['data']['dobj_config']['folder'] = $meta['collection'];
-		  $result['data']['dobj_config']['files']  = $dobj_profile;
+		  $result['data']['dobj_config']['files']  = $dobj_config;
 		  
 		}else{
-		  
 		  $result['data']['dobj_config']['files']  = $meta_dobj;
+		}
 		
+		// 取得專案資料夾
+		$project = NULL;
+		$DB_POJ	= $this->DBLink->prepare( SQL_AdMeta::GET_USER_PROJECTS());
+		$DB_POJ->bindParam(':userno' , $this->USER->UserNO , PDO::PARAM_INT);	
+		if( !$DB_POJ->execute() ){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		while( $tmp = $DB_POJ->fetch(PDO::FETCH_ASSOC) ){  
+		  $poj = [
+		    'name'  =>  $tmp['pjname'],
+			'count' =>  0,
+		  ];
+		  $poj['count'] = count(json_decode($tmp['pjelements'],true));	
+		  $project[$tmp['spno']] = $poj;
 		}
 		
 		
@@ -737,6 +992,8 @@
 		$result['data']['form_mode']   = $meta['zong'];
 		$result['data']['edit_mode']   = $Mode;
 		
+		$result['data']['user_project'] = $project;
+		
 		//$result['session']['METACOLLECTION']  = json_decode($collection_meta,true);
 		//$result['session']['DOBJCOLLECTION']  = $collection_dobj;
 		
@@ -745,6 +1002,640 @@
       }
 	  return $result;
 	}
+	
+	
+	//-- Admin Meta : Get DOBJ profile
+	// [input] : DataType  : ARCHIVE....
+	// [input] : DataFolder: collection id // file folder 
+	public function ADMeta_Read_Dobj_Profile( $DataType='' , $DataFolder=''  ){
+	  
+	  $result_key = parent::Initial_Result('dobjs');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查序號
+	    $profile_path = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/profile/'.$DataFolder.'.conf';
+		
+		if(!file_exists($profile_path)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		}
+		
+		$dobj_config = file_get_contents($profile_path);
+		$dobj_profile = json_decode($dobj_config,true);
+		
+		if( !$dobj_profile || ( !isset($dobj_profile['items']) || !is_array($dobj_profile['items']))){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		// final 
+		$result['data']   = count($dobj_profile['items']) ? $dobj_profile['items'] : [] ;
+    	$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	//-- Admin Meta : Batch Rename DOBJ And ReSave profile
+	// [input] : DataType    : ARCHIVE....
+	// [input] : DataFolder  : collection id // file folder 
+	// [input] : FilePreHeader : 檔名前墜 
+	// [input] : FileStartNum  : 檔名起始編號,含編號長度  001
+	// [input] : DOSelectEncode  : digital file name array 
+	public function ADMeta_Dobj_Batch_Rename( $DataType='' , $DataFolder='' ,$FilePreHeader='', $FileStartNum='' ,$DOSelectEncode='' ){
+	  
+	  $result_key = parent::Initial_Result('dobjs');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		$process_counter = 0;
+		$process_list    = array();
+		
+		// 檢查檔名參數
+		if(!$FilePreHeader || !$FileStartNum){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+		
+		// 檢查DO資料設定
+	    $profile_path = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/profile/'.$DataFolder.'.conf';
+		if(!file_exists($profile_path)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		}
+		
+		// 讀取DO設定
+		$dobj_config = file_get_contents($profile_path);
+		$dobj_profile = json_decode($dobj_config,true);
+		if( !$dobj_profile || ( !isset($dobj_profile['items']) || !is_array($dobj_profile['items']))){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		// 檢查勾選列表
+		$dobj_name_array = json_decode(base64_decode(str_replace('*','/',rawurldecode($DOSelectEncode))),true); 
+		if(!$dobj_name_array || !is_array($dobj_name_array) || !count($dobj_name_array)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		
+		// 設定檔名規則
+		// 掃描資料並刪除
+		
+		
+		if(!preg_match('/^(\d+)(.*?)/',$FileStartNum,$match)){
+		  throw new Exception('_META_DOBJ_RENAME_STARTNUM_PATTERN_FAILE');	 	
+		}
+		$new_fileheader 	= $FilePreHeader;
+		$new_filenum_start  = intval($match[1]);
+		$new_filenum_length = strlen($match[1]);
+		$new_filenum_footer = isset($match[2]) ? $match[2] : '';
+		
+		$rename_counter = 0;
+		
+		//確認實體檔案
+		$dobj_path = [];
+		$dobj_path['saved']  = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/saved/'.$DataFolder.'/';
+		$dobj_path['browse'] = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/browse/'.$DataFolder.'/';
+		$dobj_path['thumb']  = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/thumb/'.$DataFolder.'/';
+		
+		
+		// 執行重新命名
+		foreach($dobj_name_array as $target_do_file){
+          
+		  list($orl_filename,$orl_file_extension) = explode('.',$target_do_file);
+          $new_filename = $new_fileheader.str_pad($new_filenum_start+$rename_counter,$new_filenum_length,'0',STR_PAD_LEFT).$new_filenum_footer.'.'.$orl_file_extension;		  
+          
+		  $rename_counter++; 
+		   
+		  // 掃描原始資料設定
+		  $dobjlist_save = $dobj_profile['items'];
+		  $check_file_name = array(); // ['hasfile'=>false,'collide'=>false]檢查重新命名是否有問題，若有儲存位置
+		  foreach($dobjlist_save  as $i => $doset){
+            if($doset['file']==$target_do_file) $check_file_name['hasfile']=$i;
+			if($doset['file']==$new_filename) $check_file_name['collide']=$i;
+		  }
+		  
+          //確認原始列表內是否有碰撞(預期是沒有碰撞)
+		  if(isset($check_file_name['collide'])){
+            
+			if(isset($check_file_name['hasfile']) && $check_file_name['collide']==$check_file_name['hasfile'] ){
+			  // 碰撞號與當前編號相同，不處理
+			  continue;
+			}
+			
+			$target_do = $dobj_profile['items'][$check_file_name['collide']];
+			$target_do_change_name = preg_replace('/\./','_.',$target_do['file']);
+			
+			foreach($dobj_path as $active_folder){
+		      if(!file_exists($active_folder.$target_do['file'])){ continue; }		
+			  if(copy($active_folder.$target_do['file'],$active_folder.$target_do_change_name)){
+				unlink($active_folder.$target_do['file']); 
+			  }		  
+			}
+			
+			$dobj_profile['items'][$check_file_name['collide']]['file'] = $target_do_change_name;
+		    
+			// 紀錄
+		    //確認檔案已轉移
+			if(!file_exists($dobj_profile['store'].$target_do_change_name)){
+			  continue; //檔案未處理成功	
+			}
+			
+			$DB_LOG= $this->DBLink->prepare( SQL_AdMeta::LOGS_DOBJ_MODIFY());
+		    $DB_LOG->bindParam(':file'   , $target_do['file'] );	
+		    $DB_LOG->bindValue(':action' , 'collide' );
+		    $DB_LOG->bindParam(':store'  , $target_do_change_name);
+		    $DB_LOG->bindValue(':note'   , '' );
+		    $DB_LOG->bindParam(':user'   , $this->USER->UserID);
+		    $DB_LOG->execute();
+			
+			unset($check_file_name['collide']);
+			
+		  }
+          
+		  //確認是否檔案未碰撞並存在
+		  if(isset($check_file_name['collide']) || !isset($check_file_name['hasfile'])){
+			continue;  
+		  }
+			
+	      $target_do = $dobj_profile['items'][$check_file_name['hasfile']];  
+            			
+          // 各資料夾變更檔案
+		  foreach($dobj_path as $active_folder){
+		    if(!file_exists($active_folder.$target_do['file'])){ continue; }
+			if(copy($active_folder.$target_do['file'],$active_folder.$new_filename)){
+			  unlink($active_folder.$target_do['file']); 
+			}
+		  }
+		  
+		  $dobj_profile['items'][$check_file_name['hasfile']]['file'] = $new_filename;
+		  
+		  //確認檔案已轉移
+		  if(!file_exists($dobj_profile['store'].$new_filename)){
+			continue; //檔案未處理成功	
+		  }
+			
+		  $DB_LOG= $this->DBLink->prepare( SQL_AdMeta::LOGS_DOBJ_MODIFY());
+		  $DB_LOG->bindParam(':file'   , $target_do['file'] );	
+		  $DB_LOG->bindValue(':action' , 'rename' );
+		  $DB_LOG->bindParam(':store'  , $new_filename);
+		  $DB_LOG->bindValue(':note'   , '' );
+		  $DB_LOG->bindParam(':user'   , $this->USER->UserID);
+		  $DB_LOG->execute();
+		  
+		  $process_counter++;
+		  $process_list[] = $target_do_file;
+		
+		}
+		
+		$dobj_profile['saved'] = date('Y-m-d H:i:s');
+		$dobj_config = file_put_contents($profile_path,json_encode($dobj_profile));
+		
+		// final 
+		$result['data']['count'] = $process_counter;
+		$result['data']['list']  = $process_list ;
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	//-- Admin Meta : Batch Reorder DOBJ And ReSave profile
+	// [input] : DataType    : ARCHIVE....
+	// [input] : DataFolder  : collection id // file folder 
+	// [input] : DOFilesEncode  : digital file name array : all file
+	public function ADMeta_Dobj_Batch_Reorder( $DataType='' , $DataFolder='' ,$DOFilesEncode='' ){
+	  
+	  $result_key = parent::Initial_Result('dobjs');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		$process_counter = 0;
+		$process_list    = array();
+		
+		// 檢查DO資料設定
+	    $profile_path = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/profile/'.$DataFolder.'.conf';
+		if(!file_exists($profile_path)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		}
+		
+		// 讀取DO設定
+		$dobj_config = file_get_contents($profile_path);
+		$dobj_profile = json_decode($dobj_config,true);
+		if( !$dobj_profile || ( !isset($dobj_profile['items']) || !is_array($dobj_profile['items']))){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		// 檢查檔案順序列表
+		$dobj_name_array = json_decode(base64_decode(str_replace('*','/',rawurldecode($DOFilesEncode))),true); 
+		if(!$dobj_name_array || !is_array($dobj_name_array) || !count($dobj_name_array)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		$dobjlist_save = $dobj_profile['items'];
+		
+		//確認檔案數量相符 
+		if(count($dobj_name_array) != count($dobjlist_save)){
+		  throw new Exception('_META_DOBJ_REORDER_FILE_COUNT_NOT_MATCH');		
+		}
+		
+		//確認實體檔案
+		$dobj_path = [];
+		$dobj_path['saved']  = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/saved/'.$DataFolder.'/';
+		$dobj_path['browse'] = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/browse/'.$DataFolder.'/';
+		$dobj_path['thumb']  = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/thumb/'.$DataFolder.'/';
+		
+		$reorder_do_profile = array();  //新順序之設定
+		
+		// 執行重新命名
+		foreach($dobj_name_array as $newi => $target_do_file){
+		  
+		  foreach($dobjlist_save  as $orli => $doset){
+            if($doset['file']==$target_do_file){
+			  
+			  $reorder_do_profile[] = $doset;  	
+			   
+			  if($orli!==$newi){
+			    $DB_LOG= $this->DBLink->prepare( SQL_AdMeta::LOGS_DOBJ_MODIFY());
+			    $DB_LOG->bindParam(':file'   , $target_do_file );	
+			    $DB_LOG->bindValue(':action' , 'reorder' );
+			    $DB_LOG->bindValue(':store'  , '');
+			    $DB_LOG->bindValue(':note'   , $orli.'=>'.$newi );
+			    $DB_LOG->bindParam(':user'   , $this->USER->UserID);
+			    $DB_LOG->execute();
+			  
+			    $process_counter++;
+			    $process_list[] = $target_do_file;
+			  
+			  }
+			  break;
+			}
+		  }
+		}
+		
+		// 確認資料已變更
+		if(md5(json_encode($dobj_profile['items']))!=md5(json_encode($reorder_do_profile))){
+		  $dobj_profile['items'] = $reorder_do_profile;
+		  $dobj_profile['saved'] = date('Y-m-d H:i:s');
+		  $dobj_config = file_put_contents($profile_path,json_encode($dobj_profile));	
+		}
+		
+		// final 
+		$result['data']['count'] = $process_counter;
+		$result['data']['list']  = $process_list ;
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	//-- Admin Meta : Batch Delete DOBJ And ReSave profile
+	// [input] : DataType    : ARCHIVE....
+	// [input] : DataFolder  : collection id // file folder 
+	// [input] : DOSelectEncode  : digital file name array 
+	// [input] : Recapture  : 驗證碼
+	// [input] : Var  : digital file name array 
+	public function ADMeta_Dobj_Batch_Delete( $DataType='' , $DataFolder='' ,$DOSelectEncode='' ,$Recapture='', $Verification=''){
+	  
+	  $result_key = parent::Initial_Result('dobjs');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		$process_counter = 0;
+		$process_list    = array();
+		
+		// 檢查驗證碼
+		if(!$Recapture || $Recapture!==$Verification){
+		  throw new Exception('_REGISTER_ERROR_CAPTCHA_TEST_FAIL');
+		}
+		
+		// 檢查DO資料設定
+	    $profile_path = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/profile/'.$DataFolder.'.conf';
+		if(!file_exists($profile_path)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		}
+		
+		// 讀取DO設定
+		$dobj_config = file_get_contents($profile_path);
+		$dobj_profile = json_decode($dobj_config,true);
+		if( !$dobj_profile || ( !isset($dobj_profile['items']) || !is_array($dobj_profile['items']))){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		// 檢查勾選列表
+		$dobj_name_array = json_decode(base64_decode(str_replace('*','/',rawurldecode($DOSelectEncode))),true); 
+		if(!$dobj_name_array || !is_array($dobj_name_array) || !count($dobj_name_array)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		// 掃描資料並刪除
+		$dobjlist_save = $dobj_profile['items'];
+		
+		foreach($dobjlist_save  as $i => $doset){
+		    
+          if(!in_array($doset['file'],$dobj_name_array)){ //檔案不在刪除清單中
+			continue;  
+		  }
+		  
+		  //確認實體檔案
+		  $dobj_path = [];
+		  $dobj_path['saved']  = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/saved/'.$DataFolder.'/'.$doset['file'];
+		  $dobj_path['browse'] = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/browse/'.$DataFolder.'/'.$doset['file'];
+		  $dobj_path['thumb']  = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/thumb/'.$DataFolder.'/'.$doset['file'];
+		  
+		  $resavename = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/trach/'.$doset['file'].microtime('true');  // 垃圾桶位置
+		  
+		  foreach($dobj_path as $dotype => $dopath){
+            if(!file_exists($dopath)){ continue; }		
+            copy($dopath , $resavename);
+			unlink($dopath); 
+		  }
+		  
+		  // 移出profile
+		  unset($dobj_profile['items'][$i]);
+		  
+		  // 紀錄
+		  $DB_LOG= $this->DBLink->prepare( SQL_AdMeta::LOGS_DOBJ_MODIFY());
+		  $DB_LOG->bindParam(':file'   , $doset['file'] );	
+		  $DB_LOG->bindValue(':action' , 'delete' );
+		  $DB_LOG->bindParam(':store'  , $resavename);
+		  $DB_LOG->bindValue(':note'   , '' );
+		  $DB_LOG->bindParam(':user'   , $this->USER->UserID);
+		  $DB_LOG->execute();
+		  
+          $process_list[] = $doset['file'];
+		  $process_counter++;
+		
+		}
+		
+		$dobj_config = file_put_contents($profile_path,json_encode($dobj_profile));
+		
+		// final 
+		$result['data']['count'] = $process_counter;
+		$result['data']['list']  = $process_list ;
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	//-- Admin Meta : DOBJ File Download Prepare
+	// [input] : DataType    : ARCHIVE....
+	// [input] : DataFolder  : collection id // file folder 
+	// [input] : DoFileName  : digital file name 
+	public function ADMeta_Dobj_Prepare( $DataType='' , $DataFolder='' , $DoFileName=''){
+	  
+	  $result_key = parent::Initial_Result('dobjs');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查DO資料設定
+	    $profile_path = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/profile/'.$DataFolder.'.conf';
+		if(!file_exists($profile_path)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		}
+		
+		// 讀取DO設定
+		$dobj_config = file_get_contents($profile_path);
+		$dobj_profile = json_decode($dobj_config,true);
+		if( !$dobj_profile || ( !isset($dobj_profile['items']) || !is_array($dobj_profile['items']))){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		//確認實體檔案
+		$dobj_path = [];
+		$dobj_path['saved']  = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/saved/'.$DataFolder.'/'.$DoFileName;
+		$dobj_path['browse'] = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/browse/'.$DataFolder.'/'.$DoFileName;
+		$dobj_path['thumb']  = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/thumb/'.$DataFolder.'/'.$DoFileName;
+		
+		$dobj_download = '';
+		foreach($dobj_path as $dotype => $dopath){
+          if(!file_exists($dopath)){ continue; }		
+          $dobj_download = $dopath;
+		  break;
+		}
+		
+		if(!$dobj_download){
+		  throw new Exception('_META_DOBJ_DOWNLOAD_FILE_NOT_EXIST');			
+		}
+		
+		$hash_download = md5($DoFileName.microtime(true));
+		
+		// 紀錄
+		$DB_LOG= $this->DBLink->prepare( SQL_AdMeta::LOGS_DOBJ_MODIFY());
+		$DB_LOG->bindParam(':file'   , $DoFileName );	
+		$DB_LOG->bindValue(':action' , 'download' );
+		$DB_LOG->bindParam(':store'  , $dobj_download);
+		$DB_LOG->bindValue(':note'   , $hash_download);
+		$DB_LOG->bindParam(':user'   , $this->USER->UserID);
+		$DB_LOG->execute();
+		
+		// final 
+		$result['data']['hash']  = $hash_download;
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	//-- Admin Meta :DOBJ File Save
+	// [input] : DoDownloadHash  : logs_digital.note	
+	public function ADMeta_Dobj_Get_Download( $DoDownloadHash=''){
+	  
+	  $result_key = parent::Initial_Result('file');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+	  
+	    if(!$DoDownloadHash || strlen($DoDownloadHash)!='32'){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		} 
+	  
+		$DB_DOBJ= $this->DBLink->prepare( SQL_AdMeta::DOBJ_DOWNLOAD_RESOUCE());
+		$DB_DOBJ->bindValue(':action','download');
+		$DB_DOBJ->bindValue(':hash',$DoDownloadHash);
+		$DB_DOBJ->bindValue(':user',$this->USER->UserID);
+		if( !$DB_DOBJ->execute() || !$source = $DB_DOBJ->fetch(PDO::FETCH_ASSOC)){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		// final 
+		$result['data']['name']  = $source['doname'];
+		$result['data']['size']  = filesize($source['store']);
+		$result['data']['location']  = $source['store'];
+		
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	
+	//-- Upload Photo 
+	// [input] : ZongCode     : [str] zong folder : RECORD ARCHIVE...    
+	// [input] : FolderCode   : [str] collection_id;
+	// [input] : DOSelectEncode     : [str] timeflag  date(YmdHis);
+	// [input] : ProjectNo 	  : [int] system_project.spno;
+	public function ADMeta_Dobj_Project_Import( $ZongCode='', $FolderCode='' , $DOSelectEncode='' , $ProjectNo=0){
+	  
+	  $result_key = parent::Initial_Result('dobjs');
+	  $result  = &$this->ModelResult[$result_key];
+	   
+      // Allowed extentions.
+      $allowedExts = array("jpg","tiff","png","gif","cr2","dng","tif","raf","mp3","mp4");
+      
+	  try{
+		
+		$process_list = [];
+		$process_counter = 0;
+		
+		// 檢查參數
+		if(!preg_match('/^[\w\d\_\-]+$/',$FolderCode)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+		
+		// 檢查勾選資料
+		$dobj_name_array = json_decode(base64_decode(str_replace('*','/',rawurldecode($DOSelectEncode))),true); 
+		if(!$dobj_name_array || !is_array($dobj_name_array) || !count($dobj_name_array)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}  
+		
+		// 檢查DO資料設定
+	    $profile_path = _SYSTEM_DIGITAL_FILE_PATH.$ZongCode.'/profile/'.$FolderCode.'.conf';
+		if(!file_exists($profile_path)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		}
+		
+		// 取得數位檔案設定檔
+		$dobj_config = file_get_contents($profile_path);
+		$dobj_profile = json_decode($dobj_config,true);
+		if( !$dobj_profile || ( !isset($dobj_profile['items']) || !is_array($dobj_profile['items']))){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		// 取得專案資料夾
+		$project = array();
+		$DB_POJ= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_PROJECT());
+		$DB_POJ->bindValue(':userno',$this->USER->UserNO);
+		$DB_POJ->bindValue(':spno'  ,intval($ProjectNo));
+		if( !$DB_POJ->execute() || !$project = $DB_POJ->fetch(PDO::FETCH_ASSOC)){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		$project_elements = json_decode($project['pjelements'],true);
+		
+		// 註冊 Task
+		$DB_Task = $this->DBLink->prepare(SQL_AdMeta::REGIST_SYSTEM_TASK()); 
+		$DB_Task->bindValue(':user',intval($ProjectNo));  // !!註冊專案序號，非使用者序號  20170927
+		$DB_Task->bindValue(':task_name',"專案匯入");
+		$DB_Task->bindValue(':task_type',"PROJECT");
+		$DB_Task->bindValue(':task_num',count($dobj_name_array));
+		$DB_Task->bindValue(':task_done',0);
+		$DB_Task->bindValue(':time_initial',date('Y-m-d H:i:s'));
+		
+		if(!$DB_Task->execute()){
+		  throw new Exception('_TASK_INITIAL_FAIL'); 	
+		}
+		
+		$task_id = $this->DBLink->lastInsertId(); 
+		
+		
+		// 處理檔案
+		foreach($dobj_name_array as $package_target_file){
+		  
+		  if(preg_match('/\.mp\d/',$package_target_file)){
+            list($package_target_file,$start_time,$end_time) = explode('#',$package_target_file);
+		  }
+		  
+		  if(!file_exists($dobj_profile['store'].$package_target_file)){
+			continue;
+		  }
+		  
+		  $filepath = $dobj_profile['store'].$package_target_file;
+		  $extension = pathinfo($filepath,PATHINFO_EXTENSION);
+		  $filemime  = mime_content_type($filepath);
+		  
+		  
+		  if(isset($start_time)&&isset($end_time)){
+			$package_target_file = preg_replace('/(\..*?)$/','_'.$start_time.'-'.$end_time."\\1",$package_target_file); 
+		  }
+		  
+		  $DB_Regist = $this->DBLink->prepare(SQL_AdMeta::REGIST_FILE_UPLOAD_RECORD()); 
+		  $DB_Regist->bindValue(':utkid',	$task_id);
+		  $DB_Regist->bindValue(':folder',  $FolderCode);
+		  $DB_Regist->bindValue(':flag',	'system_project');
+		  $DB_Regist->bindValue(':user',	$this->USER->UserID);
+		  $DB_Regist->bindValue(':hash',	intval($ProjectNo));
+		  $DB_Regist->bindValue(':store',	$filepath);
+		  $DB_Regist->bindValue(':saveto',  _SYSTEM_DIGITAL_FILE_PATH.'PROJECT/'.str_pad(intval($ProjectNo),5,'0',STR_PAD_LEFT).'/');
+		  $DB_Regist->bindValue(':name',	$package_target_file);
+		  $DB_Regist->bindValue(':size',	filesize($filepath));
+		  $DB_Regist->bindValue(':mime',	strtolower($filemime));
+		  $DB_Regist->bindValue(':type',	strtolower($extension));
+		  $DB_Regist->bindValue(':last',	isset($start_time)&&isset($end_time) ? $start_time.':'.$end_time: '');
+		  
+		 
+		  if(!$DB_Regist->execute()){  
+			continue;	
+		  }
+		  
+		  $urno = $this->DBLink->lastInsertId();
+		  
+		  // 紀錄project element
+		  $project_elements[$package_target_file] = [
+		    'path'=>'PROJECT/'.str_pad(intval($ProjectNo),5,'0',STR_PAD_LEFT).'/',
+            'type'=>$extension,
+			'from'=>$FolderCode,
+			'status'=>'_regist',
+			'time'=>date('Y-m-d H:i:s'),
+			'user'=>$this->USER->UserID,
+		  ];
+		  
+		  $process_list[] = $package_target_file;
+		  $process_counter++;
+		
+		}
+		
+		// 更新project
+		$DB_POJ= $this->DBLink->prepare( SQL_AdMeta::UPDATE_TARGET_PROJECT());
+		$DB_POJ->bindValue(':regtask',$task_id);
+		$DB_POJ->bindValue(':userno',$this->USER->UserNO);
+		$DB_POJ->bindValue(':spno'  ,intval($ProjectNo));
+		$DB_POJ->bindValue(':pjelements'  ,json_encode($project_elements));
+		$DB_POJ->execute();
+		
+		// 開啟匯入程序
+		//exec(_SYSTEM_PHP_ROOT._SYSTEM_ROOT_PATH.'systemJob/Job_Import_Upload_Files.php');  // 做完才結束
+		pclose(popen("start /b "._SYSTEM_PHP_ROOT._SYSTEM_ROOT_PATH.'systemTasks/Task_Process_Project_Files.php '.$task_id,"r"));  // 可以放著不管
+		$result['data']['task']  = $task_id ;
+		$result['data']['count'] = $process_counter;
+		$result['data']['list']  = $process_list ;
+		$result['action'] = true;
+		
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;
+      
+	}
+	
+	
+	
+	
+	
 	
 	
 	//-- Admin Built : Get Task Target Element
@@ -859,16 +1750,16 @@
 		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
 		}
 		
-		// 執行logs
-		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::ADMIN_META_GET_LOGS_META_MODIFY());
+		// 執行mdlogs
+		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
+		$DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
+		$DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
+		$DB_LOGS->bindValue(':identifier' , $meta['identifier']);
+		$DB_LOGS->bindValue(':source' , json_encode($source));
+		$DB_LOGS->bindValue(':update' , json_encode($meta_update));
 		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':sid' , $meta_orl['system_id']);
-		$DB_LOGS->bindValue(':orl' , serialize($meta_data));
-		$DB_LOGS->bindValue(':new' , serialize($data_modify));
 		$DB_LOGS->bindValue(':result' , 1);
 		$DB_LOGS->execute();
-		*/
 		
 		// final 
 		$result['data']   = $meta['system_id'];
@@ -1285,18 +2176,6 @@
 		  //echo $e->getMessage().PHP_EOL;
 		}  
 		
-		
-		// 執行logs
-		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::ADMIN_META_GET_LOGS_META_MODIFY());
-		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':sid' , $meta_orl['system_id']);
-		$DB_LOGS->bindValue(':orl' , serialize($meta_data));
-		$DB_LOGS->bindValue(':new' , serialize($data_modify));
-		$DB_LOGS->bindValue(':result' , 1);
-		$DB_LOGS->execute();
-		*/
-		
 		if(count($source)){
 		  foreach($source as $mfield => $mvalue){
 			$element['META-'.$mfield] = $mvalue;  
@@ -1407,6 +2286,11 @@
 	
 	
 	
+	
+	
+	
+	
+	
 	//-- Admin Built : Save Task Element
 	// [input] : taskid  :  \w\d+;
 	public function ADBuilt_Newa_Item_Data( $TaskId='', $CollecttionMeta=array() , $DefaultMeta=''){
@@ -1459,16 +2343,9 @@
 		if( !$DB_SAVE->execute()){
 		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
 		}
-		// 執行logs
-		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::ADMIN_META_GET_LOGS_META_MODIFY());
-		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':sid' , $meta_orl['system_id']);
-		$DB_LOGS->bindValue(':orl' , serialize($meta_data));
-		$DB_LOGS->bindValue(':new' , serialize($data_modify));
-		$DB_LOGS->bindValue(':result' , 1);
-		$DB_LOGS->execute();
-		*/
+		
+		
+		
 		// final 
 		$result['data'] = $new_item_id;
 		$result['action'] = true;
@@ -1521,11 +2398,13 @@
 		
 		// 執行logs
 		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::ADMIN_META_GET_LOGS_META_MODIFY());
+		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
+		$DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
+		$DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
+		$DB_LOGS->bindValue(':identifier' , $meta['identifier']);
+		$DB_LOGS->bindValue(':source' , json_encode($source));
+		$DB_LOGS->bindValue(':update' , json_encode($meta_update));
 		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':sid' , $meta_orl['system_id']);
-		$DB_LOGS->bindValue(':orl' , serialize($meta_data));
-		$DB_LOGS->bindValue(':new' , serialize($data_modify));
 		$DB_LOGS->bindValue(':result' , 1);
 		$DB_LOGS->execute();
 		*/
@@ -1576,15 +2455,16 @@
 		
 		// 執行logs
 		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::ADMIN_META_GET_LOGS_META_MODIFY());
+		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
+		$DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
+		$DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
+		$DB_LOGS->bindValue(':identifier' , $meta['identifier']);
+		$DB_LOGS->bindValue(':source' , json_encode($source));
+		$DB_LOGS->bindValue(':update' , json_encode($meta_update));
 		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':sid' , $meta_orl['system_id']);
-		$DB_LOGS->bindValue(':orl' , serialize($meta_data));
-		$DB_LOGS->bindValue(':new' , serialize($data_modify));
 		$DB_LOGS->bindValue(':result' , 1);
 		$DB_LOGS->execute();
 		*/
-		
 		// final 
 		$result['action'] = true;
     	
@@ -1593,272 +2473,6 @@
       }
 	  return $result;  
 	}
-	
-	
-	
-	//-- Admin Built : Finish Task Work
-	// [input] : taskid  :  \w\d+;
-	public function ADBuilt_Finish_Work_Task( $TaskId=''){
-	  
-	  $result_key = parent::Initial_Result('');
-	  $result  = &$this->ModelResult[$result_key];
-	  
-	  try{  
-		
-		// 檢查序號
-	    if(!preg_match('/^TSK\d+$/',$TaskId) ){
-		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
-		}
-	    
-		// 查詢任務
-		$task = array();
-		$DB_TASK= $this->DBLink->prepare(SQL_AdMeta::GET_TARGET_META_DATA());
-		$DB_TASK->bindValue(':id' , $TaskId);
-		if( !$DB_TASK->execute() || !$task=$DB_TASK->fetch(PDO::FETCH_ASSOC) ){
-		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
-		}
-		
-		if( $task['handler'] != $this->USER->UserID){
-		  throw new Exception('_BUILT_TASK_HANDLER_FAIL');	
-		}
-		
-		// 更新所有任務案件
-		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::FINISH_TASK_ELEMENTS());
-		$DB_UPD->bindValue(':taskid' , $TaskId);
-		if( !$DB_UPD->execute()){
-		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
-		}
-		
-		// 更新任務資料
-		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::UPDATE_TASK_STATUS());
-		$DB_UPD->bindValue(':taskid' , $TaskId);
-		$DB_UPD->bindValue(':status' , '_FINISH');
-		if( !$DB_UPD->execute()){
-		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
-		}
-		
-		// 執行logs
-		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::ADMIN_META_GET_LOGS_META_MODIFY());
-		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':sid' , $meta_orl['system_id']);
-		$DB_LOGS->bindValue(':orl' , serialize($meta_data));
-		$DB_LOGS->bindValue(':new' , serialize($data_modify));
-		$DB_LOGS->bindValue(':result' , 1);
-		$DB_LOGS->execute();
-		*/
-		
-		// final 
-		$result['action'] = true;
-    	
-	  } catch (Exception $e) {
-        $result['message'][] = $e->getMessage();
-      }
-	  return $result;  
-	}
-	
-	
-	//-- Admin Built : Return Task Work
-	// [input] : taskid  :  \w\d+;
-	public function ADBuilt_Return_Work_Task( $TaskId=''){
-	  
-	  $result_key = parent::Initial_Result('');
-	  $result  = &$this->ModelResult[$result_key];
-	  
-	  try{  
-		
-		// 檢查序號
-	    if(!preg_match('/^TSK\d+$/',$TaskId) ){
-		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
-		}
-	    
-		// 確定腳色權限
-		if( !isset($this->USER->PermissionNow['group_roles']['R00']) && 
-		   (!isset($this->USER->PermissionNow['group_roles']['R02']) || $this->USER->PermissionNow['group_roles']['R02'] <= 1 )){
-		   throw new Exception('_SYSTEM_ERROR_PERMISSION_DENIAL');	
-		}
-		
-		// 查詢任務
-		$task = array();
-		$DB_TASK= $this->DBLink->prepare(SQL_AdMeta::GET_TARGET_META_DATA());
-		$DB_TASK->bindValue(':id' , $TaskId);
-		if( !$DB_TASK->execute() || !$task=$DB_TASK->fetch(PDO::FETCH_ASSOC) ){
-		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
-		}
-		
-		// 更新任務資料
-		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::UPDATE_TASK_STATUS());
-		$DB_UPD->bindValue(':taskid' , $TaskId);
-		$DB_UPD->bindValue(':status' , '_EDITING');
-		if( !$DB_UPD->execute()){
-		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
-		}
-		
-		// 執行logs
-		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::ADMIN_META_GET_LOGS_META_MODIFY());
-		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':sid' , $meta_orl['system_id']);
-		$DB_LOGS->bindValue(':orl' , serialize($meta_data));
-		$DB_LOGS->bindValue(':new' , serialize($data_modify));
-		$DB_LOGS->bindValue(':result' , 1);
-		$DB_LOGS->execute();
-		*/
-		
-		// final 
-		$result['action'] = true;
-    	
-	  } catch (Exception $e) {
-        $result['message'][] = $e->getMessage();
-      }
-	  return $result;  
-	}
-	
-	//-- Admin Built : Checked Task Work
-	// [input] : taskid  :  \w\d+;
-	public function ADBuilt_Checked_Work_Task( $TaskId=''){
-	  
-	  $result_key = parent::Initial_Result('');
-	  $result  = &$this->ModelResult[$result_key];
-	  
-	  try{  
-		
-		// 檢查序號
-	    if(!preg_match('/^TSK\d+$/',$TaskId) ){
-		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
-		}
-	    
-		// 確定腳色權限
-		if( !isset($this->USER->PermissionNow['group_roles']['R00']) && 
-		   (!isset($this->USER->PermissionNow['group_roles']['R02']) || $this->USER->PermissionNow['group_roles']['R02'] <= 1 )){
-		   throw new Exception('_SYSTEM_ERROR_PERMISSION_DENIAL');	
-		}
-		
-		// 查詢任務
-		$task = array();
-		$DB_TASK= $this->DBLink->prepare(SQL_AdMeta::GET_TARGET_META_DATA());
-		$DB_TASK->bindValue(':id' , $TaskId);
-		if( !$DB_TASK->execute() || !$task=$DB_TASK->fetch(PDO::FETCH_ASSOC) ){
-		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
-		}
-		
-		// 更新任務資料
-		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::UPDATE_TASK_STATUS());
-		$DB_UPD->bindValue(':taskid' , $TaskId);
-		$DB_UPD->bindValue(':status' , '_CHECKED');
-		if( !$DB_UPD->execute()){
-		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
-		}
-		
-		// 執行logs
-		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::ADMIN_META_GET_LOGS_META_MODIFY());
-		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':sid' , $meta_orl['system_id']);
-		$DB_LOGS->bindValue(':orl' , serialize($meta_data));
-		$DB_LOGS->bindValue(':new' , serialize($data_modify));
-		$DB_LOGS->bindValue(':result' , 1);
-		$DB_LOGS->execute();
-		*/
-		
-		// final 
-		$result['action'] = true;
-    	
-	  } catch (Exception $e) {
-        $result['message'][] = $e->getMessage();
-      }
-	  return $result;  
-	}
-	
-	
-	//-- Admin Built : Download Select Tasks Elements
-	// [input] : taskidstring  :  taskid;taskid;.... ;
-	public function ADBuilt_Export_Work_Task($TaskIdString=''){
-	  $result_key = parent::Initial_Result('');
-	  $result  = &$this->ModelResult[$result_key];
-	  try{  
-		
-		// 檢查序號
-	    if(!preg_match('/^[\w\d;]+$/',$TaskIdString)){
-		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
-		}
-	    
-		
-		// 取得任務資料
-		
-		$targets  = explode(';',$TaskIdString);
-		$exports  = array();
-		$collection = array();
-		
-		foreach($targets as $data_id){
-	      
-		  $task = NULL;
-		  $DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_META_DATA());
-		  $DB_GET->bindParam(':id'   , $data_id );	
-		  if( !$DB_GET->execute() || !$task = $DB_GET->fetch(PDO::FETCH_ASSOC)){
-		    throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
-		  }
-		
-		  // 確定腳色權限
-		  if( $task['handler']==$this->USER->UserID ){
-			
-		  }elseif( isset($this->USER->PermissionNow['group_roles']['R00']) || 
-		     (isset($this->USER->PermissionNow['group_roles']['R02']) && $this->USER->PermissionNow['group_roles']['R02'] > 1 )){
-		  }else{
-		    throw new Exception('_SYSTEM_ERROR_PERMISSION_DENIAL');		
-		  }  
-		  
-		  $exports[] = $task['task_no'];
-		  $collection[$task['task_no']] = array('id'=>$task['collection_id'],'name'=>$task['collection_name']);
-		}
-		
-		if(!count($exports)){
-		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL'); 	
-		}
-		
-		
-		// 取得任務資料
-		$DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TASKS_ELEMENTS_EXPORT($exports));
-		if( !$DB_GET->execute() ){
-		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
-		}
-		
-		$excel_records = array();
-		while($tmp = $DB_GET->fetch(PDO::FETCH_ASSOC)){
-          
-		  $meta = json_decode($tmp['meta_json'],true);
-		  		  
-          $record = array();
-		  $record[] = $collection[$tmp['taskid']]['id'];
-		  $record[] = $tmp['itemid'];
-		  $record[] = $tmp['page_file_start'];
-		  $record[] = $tmp['page_file_end'];
-		  $record[] = $collection[$tmp['taskid']]['name'];
-		  $record[] = isset($meta['description']) ? $meta['description'] : '';
-		  $record[] = isset($meta['from_date']) ? $meta['from_date'] : '';
-		  $record[] = isset($meta['to_date']) ? $meta['to_date'] : '';
-		  $record[] = isset($meta['per_name']) ? $meta['per_name'] : '';
-		  $record[] = isset($meta['place_info']) ? $meta['place_info'] : '';
-		  $record[] = isset($meta['key_word']) ? $meta['key_word'] : '';
-		  $record[] = isset($meta['edit_note']) ? $meta['edit_note'] : '';
-		  $record[] = $tmp['_editor'];
-		  $record[] = $tmp['_update'];
-		  $record[] = $tmp['_estatus'];
-		  $excel_records[] = $record;  	
-		}
-		
-		// final
-		$result['action'] = true;
-		$result['data']['excel'][] = $excel_records;
-		$result['data']['fname'] = count($exports)==1 ? 'AHAS_MetaEditor_Export_'.$task['collection_id'].'_'.date('Ymd') : 'AHAS_MetaEditor_Export_'.date('Ymd');
-		$result['data']['title'] = count($exports)==1 ? $task['collection_id'] : '匯出'.count($exports).'個任務';
-		
-	  } catch (Exception $e) {
-        $result['message'][] = $e->getMessage();
-      }
-	  return $result; 	 
-	}
-	
 	
 	
 	
@@ -1972,74 +2586,19 @@
 	}
 	
 	
-	//-- Admin Meta Hide/Show Image
-	// [input] : DataNo  :  \d+;
-	// [input] : Switch => 0/1
-	public function ADMeta_DObj_Display_Switch($DataNo , $PageName , $HideFlag){
-	  
-	  $result_key = parent::Initial_Result();
-	  $result  = &$this->ModelResult[$result_key];
-	  
-	  try{  
-		
-		// 檢查序號
-	    if(!preg_match('/^[\w\d\-]+$/',$DataNo)  ){
-		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
-		}
-	    
-		$do_display = intval($HideFlag) ? 1 : 0;
-		
-		
-		// 取得編輯資料
-		$meta = NULL;
-		$DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_META_DATA());
-		$DB_GET->bindParam(':id'   , $DataNo );	
-		if( !$DB_GET->execute() || !$meta = $DB_GET->fetch(PDO::FETCH_ASSOC)){
-		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
-		}
-		
-		$meta_doconf = json_decode($meta['dobj_json'],true);  // from convas objects
-		
-		if(!isset($meta_doconf['domask'][$PageName])){
-		  $meta_doconf['domask'][$PageName] = [];	
-		}
-		
-		$meta_doconf['domask'][$PageName]['display'] = $do_display;
-		$meta_doconf['logs'][date('Y-m-d H:i:s')] = "display ".$do_display." by ".$this->USER->UserID;
-		
-		$DB_UPD	= $this->DBLink->prepare( SQL_AdMeta::UPDATE_METADATA_DATA(array('dobj_json')));
-		$DB_UPD->bindParam(':sid'   , $meta['system_id'] , PDO::PARAM_INT);	
-		$DB_UPD->bindValue(':dobj_json' , json_encode($meta_doconf));
-	    if( !$DB_UPD->execute() ){
-		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
-		}
-		
-		// final 
-		$result['data']   = $PageName;
-		$result['action'] = true;
-		
-	  } catch (Exception $e) {
-        $result['message'][] = $e->getMessage();
-      }
-	  return $result;  
-	}
 	
 	
 	
 	
 	
-	
-	/* [ Upload Method Set] */
-	
-	
+	/*== [ File Upload Module ] ==*/
+	//name:數位檔案上傳模組
 	
 	
-	//-- Initial Upload Task 
-	// [input] : UploadData : urlencode(json_pass())  = array(folder , creater , classlv , list=>array(name size type lastmdf=timestemp));
+	//-- Initial Dobj Upload Initial 
+	// 上傳檔案初始化，建立暫存空間，並確認資料是否重複
+	// [input] : UploadData : urlencode(json_pass())  = array(folder , creater , classlv , list=>array(name, size, type, lastmdf=timestemp));
 	// [input] : FILES : [array] - System _FILES Array;
-	
-	// tip: UploadData['folder']  == meta.identifier
-	
 	public function ADMeta_Upload_Task_Initial( $UploadData=''){
 	  
 	  $result_key = parent::Initial_Result('upload');
@@ -2053,42 +2612,26 @@
 		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
 		}  
 		
-		
-		//查詢檔案資料
-		$meta = array();
-		$DB_GET	= $this->DBLink->prepare(parent::SQL_Permission_Filter(SQL_AdMeta::ADMIN_META_GET_META_VIEW_DATA()));
-		$DB_GET->bindParam(':id'      , $upload_data['folder'] , PDO::PARAM_STR);
-		if( !$DB_GET->execute()){
-		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
-		}
-		
-		if( !$meta = $DB_GET->fetch(PDO::FETCH_ASSOC)){
-		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');	
-		}
-		
 		$upload_time_flag = date('YmdHis');  // 用來識別task_upload file
 		
-		// check & create object folder
-		$digital_object_folder = $meta['data_type'].'/'.$meta['identifier'].'/';
-		if(!is_dir(_SYSTEM_FILE_PATH.$digital_object_folder.'upload/')){
-		  mkdir(_SYSTEM_FILE_PATH.$digital_object_folder.'upload/',0777,true);	  
-		} 		  
+		//create upload temp space 
+		$upload_temp_folder = _SYSTEM_DIGITAL_FILE_PATH.'UPLOAD/'.$this->USER->UserID.'/'.$upload_data['folder'].'/';
+		if(!is_dir($upload_temp_folder)){
+		  mkdir($upload_temp_folder,0777,true);	
+		}
 		
-		// 快取使用者設定
-		$result['session']['cache']['upload_folder_id']      = $upload_data['folder'];
-		$result['session']['cache']['upload_folder_address'] = $digital_object_folder;
-		
-		// check exist file
+		// check exist file 確認檔案室否曾經上傳
 		$checked  = array();
 		$DB_Check  = $this->DBLink->prepare(SQL_AdMeta::CHECK_FILE_UPLOAD_LIST()); 
-		if(count($upload_data['list'])){  
+		
+		if(is_array($upload_data['list']) && count($upload_data['list'])){  
 		  foreach($upload_data['list'] as $i=>$file){
 			$checked[$i] = array();
-			
 			$hashkey = md5($file['name'].$file['size'].$file['lastmdf']);
 			
 			$DB_Check->bindValue(':hash',$hashkey);
 			$DB_Check->execute();
+			
 			$chk = $DB_Check->fetchAll(PDO::FETCH_ASSOC);
 			
 			$checked[$i]['check']  = count($chk) ? 'double' : 'accept';
@@ -2110,19 +2653,20 @@
 	
 	
 	
-	//-- Upload digital object 
-	// [input] : FolderId     : [str] metadata.identifter
-	// [input] : TimeFlag     : [int] fuploadtimeflag; \d{14}
-	// [input] : UploadMeta   : accnum:urlencode(base64encode(json_pass()))  = array(F=>V);
+	//-- Upload Photo 
+	// [input] : ZongCode     : [str] zong folder : RECORD ARCHIVE...    
+	// [input] : FolderCode   : [str] collection_id;
+	// [input] : TimeFlag     : [str] timeflag  date(YmdHis);
+	// [input] : UploadMeta : accnum:urlencode(base64encode(json_pass()))  = array(F=>V);
 	// [input] : FILES : [array] - System _FILES Array;
-	public function ADMeta_Upload_DObj( $FolderId='' , $TimeFlag='' , $UploadMeta='' , $FILES = array()){
+	public function ADMeta_Uploading_Dobj( $ZongCode='', $FolderCode='' ,$TimeFlag='' , $UploadMeta='' , $FILES = array()){
 	  
 	  $result_key = parent::Initial_Result('upload');
 	  $result  = &$this->ModelResult[$result_key];
 	  
       // [name] => MyFile.jpg  / [type] => image/jpeg  /  [tmp_name] => /tmp/php/php6hst32 / [error] => UPLOAD_ERR_OK / [size] => 98174
 	  // Allowed extentions.
-      $allowedExts = array("jpg","tiff","png","gif","cr2","dng","tif","raf","mp4");
+      $allowedExts = array("jpg","tiff","png","gif","cr2","dng","tif","raf","mp3","mp4");
       
       // Get filename.
       $temp = explode(".", $FILES["file"]["name"]);
@@ -2139,13 +2683,13 @@
 	  try{
 		
 		// 檢查參數
-		if(!preg_match('/^[\w\d\-]+$/',$FolderId)  ||  !preg_match('/^\d{14}$/',$TimeFlag)   ){
+		if(!preg_match('/^[\w\d\_\-]+$/',$FolderCode)){
 		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
 		}
 		
-		$folder_id = $FolderId;
-		$upload_flag = $TimeFlag;
-		
+		if(!preg_match('/^\d{14}$/',$TimeFlag)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
      	
 		if (!in_array(strtolower($extension), $allowedExts)) {
 	      throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
@@ -2154,43 +2698,37 @@
         if( $FILES["file"]["error"] ){
           throw new Exception('_SYSTEM_UPLOAD_ERROR:'.$FILES["file"]["error"]);  
         }
-		
-		if(!isset($_SESSION[_SYSTEM_NAME_SHORT]['cache']['upload_folder_address'])){
-		  throw new Exception('_SYSTEM_ERROR_ACCESS_DENIAL');	 
-		}
-		
-		$save_folder = _SYSTEM_FILE_PATH.$_SESSION[_SYSTEM_NAME_SHORT]['cache']['upload_folder_address'].'upload/';
-		
+        
 		
 		//紀錄上傳檔案
 		$hashkey = md5($FILES["file"]['name'].$FILES["file"]['size'].$FILES["file"]['lastmdf']);
+		$filetmp  = microtime(true);
+		$filepath = _SYSTEM_DIGITAL_FILE_PATH.'UPLOAD/'.$this->USER->UserID.'/'.$FolderCode.'/'.$filetmp;
+		
 		$DB_Regist = $this->DBLink->prepare(SQL_AdMeta::REGIST_FILE_UPLOAD_RECORD()); 
-		$DB_Regist->bindValue(':utkid',0);
-		$DB_Regist->bindValue(':folder',$folder_id);
-		$DB_Regist->bindValue(':flag',$upload_flag);
-		$DB_Regist->bindValue(':user',$this->USER->UserID);
-		$DB_Regist->bindValue(':hash',$hashkey);
-		$DB_Regist->bindValue(':creater',isset($upload_data['creater']) ? $upload_data['creater'] : '');
-		$DB_Regist->bindValue(':store',$_SESSION[_SYSTEM_NAME_SHORT]['cache']['upload_folder_address']);
-		$DB_Regist->bindValue(':name',$FILES["file"]['name']);
-		$DB_Regist->bindValue(':size',$FILES["file"]['size']);
-		$DB_Regist->bindValue(':mime',strtolower($FILES["file"]['type']));
-		$DB_Regist->bindValue(':type',strtolower($extension));
-		$DB_Regist->bindValue(':last',$FILES["file"]['lastmdf']);
+		$DB_Regist->bindValue(':utkid',	0);
+		$DB_Regist->bindValue(':folder',$FolderCode);
+		$DB_Regist->bindValue(':flag',	$TimeFlag);
+		$DB_Regist->bindValue(':user',	$this->USER->UserID);
+		$DB_Regist->bindValue(':hash',	$hashkey);
+		$DB_Regist->bindValue(':store',	$filepath);
+		$DB_Regist->bindValue(':saveto',_SYSTEM_DIGITAL_FILE_PATH.$ZongCode.'/');
+		$DB_Regist->bindValue(':name',	$FILES["file"]['name']);
+		$DB_Regist->bindValue(':size',	$FILES["file"]['size']);
+		$DB_Regist->bindValue(':mime',	strtolower($FILES["file"]['type']));
+		$DB_Regist->bindValue(':type',	strtolower($extension));
+		$DB_Regist->bindValue(':last',	$FILES["file"]['lastmdf']);
 		
 		if(!$DB_Regist->execute()){
 		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');	
 		}
+		
 		$urno = $this->DBLink->lastInsertId();
 		
-		if(!isset($_SESSION[_SYSTEM_NAME_SHORT]['cache']['upload_folder_address'])){
-		  throw new Exception('_SYSTEM_ERROR_ACCESS_DENIAL');	 
+		// 取得文件資料
+		if(!move_uploaded_file($FILES["file"]["tmp_name"], $filepath )){
+		  throw new Exception('_META_DOBJ_UPLOAD_MOVE_FAIL');		
 		}
-		
-		
-		
-		// 取得上傳資料
-		move_uploaded_file($FILES["file"]["tmp_name"],$save_folder.str_pad($urno,8,'0',STR_PAD_LEFT).$hashkey );
 		
 		// 更新上傳紀錄
 		$DB_Update = $this->DBLink->prepare(SQL_AdMeta::UPDATE_FILE_UPLOAD_UPLOADED()); 
@@ -2206,10 +2744,622 @@
       
 	}
 	
+	//-- Finish Digital Object Upload Task 
+	// [input] : ZongCode     : [str] zong folder : RECORD ARCHIVE...     
+	// [input] : FolderId     : [str] metadata.collection
+	// [input] : TimeFlag     : [int] fuploadtimeflag; \d{14}
+	public function ADMeta_Upload_Task_Finish($ZongCode='', $FolderId='' , $TimeFlag='' ){
+	  
+	  $result_key = parent::Initial_Result('queue');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{
+		  
+		// 檢查參數
+		if(!preg_match('/^[\w\d\-\_]+$/',$FolderId)  ||  !preg_match('/^\d{14}$/',$TimeFlag)   ){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+		
+		
+		// 確認資料夾狀態
+		$dobj_exist   = array();
+		$folder_conf = _SYSTEM_DIGITAL_FILE_PATH.$ZongCode.'/profile/'.$FolderId.'.conf';
+		if(file_exists($folder_conf)){
+		  $dobj_array = json_decode(file_get_contents($folder_conf),true);	
+		  if(isset($dobj_array['items'])){
+		    foreach($dobj_array['items'] as $dobj ){
+		  	  $dobj_exist[] = $dobj['file'];
+		    }
+		  }
+		}
+		
+		
+		$folder_id = $FolderId;
+		$upload_flag = $TimeFlag;
+		
+		// 查詢新上傳檔案
+		$dobj_upload = array();
+		$DB_DOJ = $this->DBLink->prepare(SQL_AdMeta::SELECT_UPLOAD_OBJECT_LIST());
+		$DB_DOJ->bindValue(':folder', $FolderId); 
+		$DB_DOJ->bindValue(':flag'	, $upload_flag); 
+		$DB_DOJ->bindValue(':user'	, $this->USER->UserID); 
+		if(!$DB_DOJ->execute() ){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');	
+		}
+		
+		while( $tmp = $DB_DOJ->fetch(PDO::FETCH_ASSOC)){
+		  $dobj = $tmp;
+		  if( in_array($tmp['name'],$dobj_exist) ){
+			$dobj['@check'] = 'duplicate'; 
+		  }else{
+			$dobj['@check'] = '';   
+		  }
+		  $dobj_upload[] = $dobj;
+		}
+		
+		if(!count($dobj_upload)){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');	
+		}
+		
+		$result['data']   = $dobj_upload;
+		$result['action'] = true;
+		
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;
+	}
+	
+	
+	//-- Active Upload Object Import  讓上傳成功之檔案執行匯入
+	// [input] : UploadListPaser     : [str] encode string(system_upload.urno.array)
+	public function ADMeta_Process_Upload_Import( $UploadListPaser=''){
+	 
+	  $result_key = parent::Initial_Result('uplact');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{
+		
+		
+		// 處理勾選檔案
+		$process_counter = 0;
+		$process_list    = array();
+        $uplfile_list = json_decode(base64_decode(str_replace('*','/',rawurldecode($UploadListPaser))),true);  
+		
+		
+		//註冊匯入工作
+		$DB_Task = $this->DBLink->prepare(SQL_AdMeta::REGIST_SYSTEM_TASK()); 
+		$DB_Task->bindValue(':user',$this->USER->UserNO);
+		$DB_Task->bindValue(':task_name',"數位檔案上傳");
+		$DB_Task->bindValue(':task_type',"DOIMPORT");
+		$DB_Task->bindValue(':task_num',count($uplfile_list));
+		$DB_Task->bindValue(':task_done',0);
+		$DB_Task->bindValue(':time_initial',date('Y-m-d H:i:s'));
+		
+		if(!$DB_Task->execute()){
+		  throw new Exception('_TASK_INITIAL_FAIL'); 	
+		}
+		
+		$task_id = $this->DBLink->lastInsertId(); 
+		
+		// 處理資料
+		$DB_UPL = $this->DBLink->prepare(SQL_AdMeta::SELECT_TARGET_UPLOAD_FILE());  //查詢上傳檔案
+		$DB_DEL = $this->DBLink->prepare(SQL_AdMeta::DELETE_TARGET_UPLOAD_FILE());  //標示檔案刪除 
+		
+		$DB_Bind = $this->DBLink->prepare(SQL_AdMeta::BIND_UPLOAD_TO_TASK());  // 將上傳資料綁定工作
+		$DB_Bind->bindValue(':utkid',$task_id);
+		
+		foreach($uplfile_list as $urno){
+			
+		  $DB_UPL->bindValue(':urno',$urno);	
+		  if(!$DB_UPL->execute()) continue;
+          
+		  $tmp = $DB_UPL->fetch(PDO::FETCH_ASSOC);	
+		  $active_time = date('Y-m-d H:i:s');
+		  $logs = $tmp['_logs'] ? json_decode($tmp['_logs'],true) : array();
+		  
+		  if(!file_exists($tmp['store'])){
+			
+			//檔案若不存在則標示檔案刪除
+		    $logs[$active_time] = $this->USER->UserID.' upload file unfound.';
+		    $DB_DEL->bindValue(':process',$active_time);
+		    $DB_DEL->bindValue(':logs',json_encode($logs));
+		    $DB_DEL->bindValue(':urno',$urno);	
+		    if(!$DB_DEL->execute()) continue;
+			 
+		  }
+		  
+		  $logs[$active_time] = $this->USER->UserID.' regist import task:'.$task_id.'.';
+		  
+		  
+		  $DB_Bind->bindValue(':urno',$urno); 
+		  $DB_Bind->bindValue(':logs',json_encode($logs));		  
+		  
+		  if(!$DB_Bind->execute()) continue;
+		 
+		  $process_counter++;
+		  $process_list[] = $urno;
+		  
+		}
+		
+		// 開啟匯入程序
+		//exec(_SYSTEM_PHP_ROOT._SYSTEM_ROOT_PATH.'systemJob/Job_Import_Upload_Files.php');  // 做完才結束
+		pclose(popen("start /b "._SYSTEM_PHP_ROOT._SYSTEM_ROOT_PATH.'systemTasks/Task_Import_Upload_Files.php '.$task_id,"r"));  // 可以放著不管
+		
+		$result['data']['count'] = $process_counter;
+		$result['data']['task']  = $task_id ;
+		$result['data']['list']  = $process_list ;
+		
+		$result['action'] = true;
+	
+	 } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;
+	}
+	
+	
+	
+	//-- Active Upload Object Delete  刪除上傳成功之檔案
+	// [input] : UploadListPaser     : [str] encode string(system_upload.urno.array)
+	public function ADMeta_Process_Upload_Delete( $UploadListPaser='' ){
+	 
+	  $result_key = parent::Initial_Result('uplact');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{
+		
+        $uplfile_list = json_decode(base64_decode(str_replace('*','/',rawurldecode($UploadListPaser))),true);  
+		
+		if(!count($uplfile_list)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		}
+		
+        // 處理勾選檔案
+		$process_counter = 0;
+		$process_list    = array();
+		
+		$DB_UPL = $this->DBLink->prepare(SQL_AdMeta::SELECT_TARGET_UPLOAD_FILE());  //查詢上傳檔案
+		$DB_DEL = $this->DBLink->prepare(SQL_AdMeta::DELETE_TARGET_UPLOAD_FILE());  //標示檔案刪除 
+		
+		foreach($uplfile_list as $urno){
+		  
+		  $DB_UPL->bindValue(':urno',$urno);	
+		  if(!$DB_UPL->execute()) continue;
+          
+		  $tmp = $DB_UPL->fetch(PDO::FETCH_ASSOC);
+		  
+		  //刪除暫存檔
+		  if(file_exists($tmp['store'])){
+			unlink($tmp['store']);
+		  }
+		  
+		  //資料庫更新
+		  $active_time = date('Y-m-d H:i:s');
+		  $logs = $tmp['_logs'] ? json_decode($tmp['_logs'],true) : array();
+		  $logs[$active_time] = $this->USER->UserID.' delete upload file.';
+		  
+		  $DB_DEL->bindValue(':process',$active_time);
+		  $DB_DEL->bindValue(':logs',json_encode($logs));
+		  $DB_DEL->bindValue(':urno',$urno);	
+		  if(!$DB_DEL->execute()) continue;
+		  
+		  $process_counter++;
+		  $process_list[] = $urno;
+		
+		}
+		
+		$result['data']['count'] = $process_counter;
+		$result['data']['list']  = $process_list ;
+		$result['action'] = true;
+	     
+	 } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;
+	}
+	
+	
+	
+	//-- Upload Member Photo  // 更新議員頭像 
+	// [input] : SystemId : metadata.system_id
+	// [input] : FILES : [array] - System _FILES Array;
+	public function ADMeta_Upload_Member_Photo( $SystemId='' , $FILES = array()){
+	  
+	  $result_key = parent::Initial_Result('');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+      // [name] => MyFile.jpg  / [type] => image/jpeg  /  [tmp_name] => /tmp/php/php6hst32 / [error] => UPLOAD_ERR_OK / [size] => 98174
+	  // Allowed extentions.
+      $allowedExts = array("jpg","png");
+       
+	  try{
+		
+		// 檢查序號
+	    if(!preg_match('/^[\w\d\-]+$/',$SystemId)  ){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+		
+		// Get filename.
+        $temp = explode(".", $FILES["file"]["name"]);
+        // Get extension.
+        $extension = end($temp);
+		
+		// 檢查上傳檔案資訊
+		if (!in_array(strtolower($extension), $allowedExts)) {
+	      throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+	    }	
+		
+        if( $FILES["file"]["error"] ){
+          throw new Exception('_SYSTEM_UPLOAD_ERROR:'.$FILES["file"]["error"]);  
+        }
+		
+		
+	  
+	    // Validate uploaded files.
+	    // Do not use $_FILES["file"]["type"] as it can be easily forged.
+	    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+	    $mime  = finfo_file($finfo, $FILES["file"]["tmp_name"]);
+		
+		$zong_folder =  _SYSTEM_FILE_PATH.'BIOGRAPHY/';
+		
+		// 取得編輯資料
+		$meta = NULL;
+		$DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_META_DATA());
+		$DB_GET->bindParam(':id'   , $SystemId );	
+		if( !$DB_GET->execute() || !$meta = $DB_GET->fetch(PDO::FETCH_ASSOC)){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		// 處理數位檔案
+		$dobj_config = json_decode($meta['dobj_json'],true);
+		
+		if(!isset($dobj_config['portrait'])){
+		  $dobj_config['portrait'] = [
+		    "name"=>"議員頭像",
+		    "type"=>"",
+		    "mode"=>"base64",
+		    "source"=>""
+		  ]; 
+		}else{
+		  // 轉存
+		  $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $dobj_config['portrait']['source']));	
+		  $resave = $zong_folder.'trach/'.str_pad($SystemId,'10','0',STR_PAD_LEFT).microtime(true).'.'.$dobj_config['portrait']['type'];
+		  file_put_contents($resave, $data);
+		}
+		
+		// 取得上傳資料
+		$store_path = $zong_folder.'browse/'.str_pad($SystemId,'10','0',STR_PAD_LEFT).'.'.$dobj_config['portrait']['type'];
+		move_uploaded_file($FILES["file"]["tmp_name"],$store_path);
+		
+		// 轉存base64
+		$type = pathinfo($store_path, PATHINFO_EXTENSION);
+	    $data = file_get_contents($store_path);
+	    $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+		
+		$dobj_config['portrait']['type'] = $type;
+		$dobj_config['portrait']['source'] = $base64;
+		
+		// 執行更新
+		$DB_SAVE= $this->DBLink->prepare(SQL_AdMeta::UPDATE_METADATA_DATA(array('dobj_json')));
+		$DB_SAVE->bindValue(':sid'    	 , $meta['system_id']);
+		$DB_SAVE->bindValue(':dobj_json' , json_encode($dobj_config));
+		if( !$DB_SAVE->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
+		}
+		
+		$result['data']   = $base64;
+		$result['action'] = true;
+		
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/* SAMPLE */
+	/*******************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	********************************************************************************************************
+	*******************************************************************************************************/
+	
+	
+	
+	/***== [ 建檔管理模組函數 ] ==***/
+	//-- Admin Built : Finish Task Work
+	// [input] : taskid  :  \w\d+;
+	public function ADBuilt_Finish_Work_Task( $TaskId=''){
+	  
+	  $result_key = parent::Initial_Result('');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查序號
+	    if(!preg_match('/^TSK\d+$/',$TaskId) ){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+	    
+		// 查詢任務
+		$task = array();
+		$DB_TASK= $this->DBLink->prepare(SQL_AdMeta::GET_TARGET_META_DATA());
+		$DB_TASK->bindValue(':id' , $TaskId);
+		if( !$DB_TASK->execute() || !$task=$DB_TASK->fetch(PDO::FETCH_ASSOC) ){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		if( $task['handler'] != $this->USER->UserID){
+		  throw new Exception('_BUILT_TASK_HANDLER_FAIL');	
+		}
+		
+		// 更新所有任務案件
+		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::FINISH_TASK_ELEMENTS());
+		$DB_UPD->bindValue(':taskid' , $TaskId);
+		if( !$DB_UPD->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
+		}
+		
+		// 更新任務資料
+		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::UPDATE_TASK_STATUS());
+		$DB_UPD->bindValue(':taskid' , $TaskId);
+		$DB_UPD->bindValue(':status' , '_FINISH');
+		if( !$DB_UPD->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
+		}
+		
+		// 執行logs
+		/*
+		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
+		$DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
+		$DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
+		$DB_LOGS->bindValue(':identifier' , $meta['identifier']);
+		$DB_LOGS->bindValue(':source' , json_encode($source));
+		$DB_LOGS->bindValue(':update' , json_encode($meta_update));
+		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
+		$DB_LOGS->bindValue(':result' , 1);
+		$DB_LOGS->execute();
+		*/
+		
+		// final 
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	
+	//-- Admin Built : Return Task Work
+	// [input] : taskid  :  \w\d+;
+	public function ADBuilt_Return_Work_Task( $TaskId=''){
+	  
+	  $result_key = parent::Initial_Result('');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查序號
+	    if(!preg_match('/^TSK\d+$/',$TaskId) ){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+	    
+		// 確定腳色權限
+		if( !isset($this->USER->PermissionNow['group_roles']['R00']) && 
+		   (!isset($this->USER->PermissionNow['group_roles']['R02']) || $this->USER->PermissionNow['group_roles']['R02'] <= 1 )){
+		   throw new Exception('_SYSTEM_ERROR_PERMISSION_DENIAL');	
+		}
+		
+		// 查詢任務
+		$task = array();
+		$DB_TASK= $this->DBLink->prepare(SQL_AdMeta::GET_TARGET_META_DATA());
+		$DB_TASK->bindValue(':id' , $TaskId);
+		if( !$DB_TASK->execute() || !$task=$DB_TASK->fetch(PDO::FETCH_ASSOC) ){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		// 更新任務資料
+		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::UPDATE_TASK_STATUS());
+		$DB_UPD->bindValue(':taskid' , $TaskId);
+		$DB_UPD->bindValue(':status' , '_EDITING');
+		if( !$DB_UPD->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
+		}
+		
+		// 執行logs
+		/*
+		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
+		$DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
+		$DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
+		$DB_LOGS->bindValue(':identifier' , $meta['identifier']);
+		$DB_LOGS->bindValue(':source' , json_encode($source));
+		$DB_LOGS->bindValue(':update' , json_encode($meta_update));
+		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
+		$DB_LOGS->bindValue(':result' , 1);
+		$DB_LOGS->execute();
+		*/
+		
+		// final 
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	//-- Admin Built : Checked Task Work
+	// [input] : taskid  :  \w\d+;
+	public function ADBuilt_Checked_Work_Task( $TaskId=''){
+	  
+	  $result_key = parent::Initial_Result('');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查序號
+	    if(!preg_match('/^TSK\d+$/',$TaskId) ){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+	    
+		// 確定腳色權限
+		if( !isset($this->USER->PermissionNow['group_roles']['R00']) && 
+		   (!isset($this->USER->PermissionNow['group_roles']['R02']) || $this->USER->PermissionNow['group_roles']['R02'] <= 1 )){
+		   throw new Exception('_SYSTEM_ERROR_PERMISSION_DENIAL');	
+		}
+		
+		// 查詢任務
+		$task = array();
+		$DB_TASK= $this->DBLink->prepare(SQL_AdMeta::GET_TARGET_META_DATA());
+		$DB_TASK->bindValue(':id' , $TaskId);
+		if( !$DB_TASK->execute() || !$task=$DB_TASK->fetch(PDO::FETCH_ASSOC) ){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		// 更新任務資料
+		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::UPDATE_TASK_STATUS());
+		$DB_UPD->bindValue(':taskid' , $TaskId);
+		$DB_UPD->bindValue(':status' , '_CHECKED');
+		if( !$DB_UPD->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
+		}
+		
+		// 執行logs
+		/*
+		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
+		$DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
+		$DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
+		$DB_LOGS->bindValue(':identifier' , $meta['identifier']);
+		$DB_LOGS->bindValue(':source' , json_encode($source));
+		$DB_LOGS->bindValue(':update' , json_encode($meta_update));
+		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
+		$DB_LOGS->bindValue(':result' , 1);
+		$DB_LOGS->execute();
+		*/
+		
+		// final 
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	
+	//-- Admin Built : Download Select Tasks Elements
+	// [input] : taskidstring  :  taskid;taskid;.... ;
+	public function ADBuilt_Export_Work_Task($TaskIdString=''){
+	  $result_key = parent::Initial_Result('');
+	  $result  = &$this->ModelResult[$result_key];
+	  try{  
+		
+		// 檢查序號
+	    if(!preg_match('/^[\w\d;]+$/',$TaskIdString)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+	    
+		
+		// 取得任務資料
+		
+		$targets  = explode(';',$TaskIdString);
+		$exports  = array();
+		$collection = array();
+		
+		foreach($targets as $data_id){
+	      
+		  $task = NULL;
+		  $DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_META_DATA());
+		  $DB_GET->bindParam(':id'   , $data_id );	
+		  if( !$DB_GET->execute() || !$task = $DB_GET->fetch(PDO::FETCH_ASSOC)){
+		    throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		  }
+		
+		  // 確定腳色權限
+		  if( $task['handler']==$this->USER->UserID ){
+			
+		  }elseif( isset($this->USER->PermissionNow['group_roles']['R00']) || 
+		     (isset($this->USER->PermissionNow['group_roles']['R02']) && $this->USER->PermissionNow['group_roles']['R02'] > 1 )){
+		  }else{
+		    throw new Exception('_SYSTEM_ERROR_PERMISSION_DENIAL');		
+		  }  
+		  
+		  $exports[] = $task['task_no'];
+		  $collection[$task['task_no']] = array('id'=>$task['collection_id'],'name'=>$task['collection_name']);
+		}
+		
+		if(!count($exports)){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL'); 	
+		}
+		
+		
+		// 取得任務資料
+		$DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TASKS_ELEMENTS_EXPORT($exports));
+		if( !$DB_GET->execute() ){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		$excel_records = array();
+		while($tmp = $DB_GET->fetch(PDO::FETCH_ASSOC)){
+          
+		  $meta = json_decode($tmp['meta_json'],true);
+		  		  
+          $record = array();
+		  $record[] = $collection[$tmp['taskid']]['id'];
+		  $record[] = $tmp['itemid'];
+		  $record[] = $tmp['page_file_start'];
+		  $record[] = $tmp['page_file_end'];
+		  $record[] = $collection[$tmp['taskid']]['name'];
+		  $record[] = isset($meta['description']) ? $meta['description'] : '';
+		  $record[] = isset($meta['from_date']) ? $meta['from_date'] : '';
+		  $record[] = isset($meta['to_date']) ? $meta['to_date'] : '';
+		  $record[] = isset($meta['per_name']) ? $meta['per_name'] : '';
+		  $record[] = isset($meta['place_info']) ? $meta['place_info'] : '';
+		  $record[] = isset($meta['key_word']) ? $meta['key_word'] : '';
+		  $record[] = isset($meta['edit_note']) ? $meta['edit_note'] : '';
+		  $record[] = $tmp['_editor'];
+		  $record[] = $tmp['_update'];
+		  $record[] = $tmp['_estatus'];
+		  $excel_records[] = $record;  	
+		}
+		
+		// final
+		$result['action'] = true;
+		$result['data']['excel'][] = $excel_records;
+		$result['data']['fname'] = count($exports)==1 ? 'AHAS_MetaEditor_Export_'.$task['collection_id'].'_'.date('Ymd') : 'AHAS_MetaEditor_Export_'.date('Ymd');
+		$result['data']['title'] = count($exports)==1 ? $task['collection_id'] : '匯出'.count($exports).'個任務';
+		
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result; 	 
+	}
+	
+	
+	
+	
+	
 	//-- Finish Photo Upload Task 
 	// [input] : FolderId     : [str] metadata.identifter
 	// [input] : TimeFlag     : [int] fuploadtimeflag; \d{14}
-	public function ADMeta_Upload_Task_Finish( $FolderId='' , $TimeFlag=''){
+	public function ADMeta_Upload_Task_Finish_Restore( $FolderId='' , $TimeFlag=''){
 	  
 	  $result_key = parent::Initial_Result('task');
 	  $result  = &$this->ModelResult[$result_key];
@@ -2217,22 +3367,13 @@
 	  try{
 		  
 		// 檢查參數
-		if(!preg_match('/^[\w\d\-]+$/',$FolderId)  ||  !preg_match('/^\d{14}$/',$TimeFlag)   ){
+		if(!preg_match('/^[\w\d\-\_]+$/',$FolderId)  ||  !preg_match('/^\d{14}$/',$TimeFlag)   ){
 		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
 		}
 		
 		$folder_id = $FolderId;
 		$upload_flag = $TimeFlag;
 		
-		
-		// 設定變數
-		$meta  = $this->Metadata;
-		if(!count($meta)){
-		  throw new Exception('_SYSTEM_ERROR_ACCESS_PROCESS_FAIL');	
-		}
-		
-		
-		$dobject_config = json_decode($meta['dobj_json'],true);
 		
 		// 查詢新上傳檔案
 		$DB_PHO = $this->DBLink->prepare(SQL_AdMeta::SELECT_UPLOAD_OBJECT_LIST());
@@ -2243,15 +3384,23 @@
 		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');	
 		}
 		
+		
+		// 設定變數
+		$meta  = $this->Metadata;
+		if(!count($meta)){
+		  throw new Exception('_SYSTEM_ERROR_ACCESS_PROCESS_FAIL');	
+		}
+		
+		$dobject_config = json_decode($meta['dobj_json'],true);
+		
+		
+		
 		$objs = $DB_PHO->fetchAll(PDO::FETCH_ASSOC);
 		if(!count($objs)){
 		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');	
 		}
 		
-		
-		
 		$new_do_conf = array();
-		
 		
 		 /* [ 處理上傳程序 ] */
 		foreach($objs as $obj){
@@ -2336,12 +3485,57 @@
 	  return $result;
 	}
 	
-	
-	
-	
-	/* SAMPLE */
-	
-	
+	//-- Admin Meta Hide/Show Image
+	// [input] : DataNo  :  \d+;
+	// [input] : Switch => 0/1
+	public function ADMeta_DObj_Display_Switch($DataNo , $PageName , $HideFlag){
+	  
+	  $result_key = parent::Initial_Result();
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查序號
+	    if(!preg_match('/^[\w\d\-]+$/',$DataNo)  ){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+	    
+		$do_display = intval($HideFlag) ? 1 : 0;
+		
+		
+		// 取得編輯資料
+		$meta = NULL;
+		$DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_META_DATA());
+		$DB_GET->bindParam(':id'   , $DataNo );	
+		if( !$DB_GET->execute() || !$meta = $DB_GET->fetch(PDO::FETCH_ASSOC)){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		$meta_doconf = json_decode($meta['dobj_json'],true);  // from convas objects
+		
+		if(!isset($meta_doconf['domask'][$PageName])){
+		  $meta_doconf['domask'][$PageName] = [];	
+		}
+		
+		$meta_doconf['domask'][$PageName]['display'] = $do_display;
+		$meta_doconf['logs'][date('Y-m-d H:i:s')] = "display ".$do_display." by ".$this->USER->UserID;
+		
+		$DB_UPD	= $this->DBLink->prepare( SQL_AdMeta::UPDATE_METADATA_DATA(array('dobj_json')));
+		$DB_UPD->bindParam(':sid'   , $meta['system_id'] , PDO::PARAM_INT);	
+		$DB_UPD->bindValue(':dobj_json' , json_encode($meta_doconf));
+	    if( !$DB_UPD->execute() ){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		// final 
+		$result['data']   = $PageName;
+		$result['action'] = true;
+		
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
 	
 	
 	//-- Admin Post Create New Post 

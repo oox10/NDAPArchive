@@ -36,6 +36,11 @@
 	
 	$page_info 		= isset($this->vars['server']['info']) ? $this->vars['server']['info'] : '';  
 	
+	//<<Refer from login>> : 登入相依變數
+	$ui_config      = isset($user_info['permission']['interface_mask']) ? $user_info['permission']['interface_mask'] : array();
+	$admin_open     = isset($ui_config['*']) ? true : false;
+	
+	
 	?>
   </head>
   <body>
@@ -166,7 +171,9 @@
 		    <div class='record_header'>
 			  <span class='record_name'>回報資料</span>
 			  <span class='record_option'>
-			    <?php if(in_array('admin',$user_mode)): ?> <i class='sysbtn' id='act_report_save'><a class='btn_mark pic_save'  ></a></i> <?php endif; ?>
+			    <?php if( $admin_open || isset($ui_config['admin_track.html5tpl.php']['track_admin']) && intval($ui_config['admin_track.html5tpl.php']['track_admin'])): ?> 
+				<i class='sysbtn' id='act_report_save'><a class='btn_mark pic_save'  ></a></i> 
+				<?php endif; ?>
 				<a class='option view_switch' id='editor_switch' >  +  </a>
 				<a class='option' id='editor_reform'  >  &times;  </a>
 			  </span>
@@ -193,7 +200,7 @@
 				</div>
 				<div class='data_col '> <label class='data_field '> 處理結果 </label><div class='data_value'> <textarea class='_variable _update' id='fb_treatment' <?php if(!in_array('admin',$user_mode)): ?> default='readonly' <?php endif; ?> ></textarea> </div> </div>
 				
-				<?php if(in_array('admin',$user_mode)): ?>
+				<?php if( $admin_open || isset($ui_config['admin_track.html5tpl.php']['track_admin']) && intval($ui_config['admin_track.html5tpl.php']['track_admin'])): ?> 
 				<div class='data_col  action_col'> 
 				  <label class='data_field '> 回報功能 </label>
 				  <div class='data_value'> 

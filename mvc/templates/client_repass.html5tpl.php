@@ -48,10 +48,12 @@
 		  <span id='system_title' ><?php echo _SYSTEM_HTML_TITLE;?></span>
 		</div>
 		<ul id='navbar-manual'>
-		  <li>最新消息</li>
-		  <li>檢索系統</li>
-		  <li>操作手冊</li>
-		  <li>相關連結</li>
+		  <li ><a href='index.php?act=Landing/index'> 首頁</a></li>
+		  <li ><a href='index.php?act=Archive/index'>資料檢索</a></li>
+		  <li atthis='1'> 帳號註冊 </li>
+		  <li ><a href='index.php?act=Landing/helper'>使用說明</a></li>
+		  <li ><a href='index.php?act=Landing/sitelink'>相關連結</a></li>
+		  <li><i class="fa fa-exclamation-circle" aria-hidden="true"></i> 系統回報</li>
 		</ul>
 	  </div>
 	</header>

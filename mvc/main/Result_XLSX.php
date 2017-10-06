@@ -19,8 +19,7 @@
 	  
 	  //php excel initial
 	  $objReader = PHPExcel_IOFactory::createReader('Excel2007');
-	  $objPHPExcel = $objReader->load(_SYSTEM_XLSX_PATH.$xlsx_temp);
-	    
+	  $objPHPExcel = $objReader->load(_SYSTEM_ROOT_PATH.'mvc/templates/'.$xlsx_temp);
 		
 	  /* 2003 xls
 	  $objPHPExcel = new PHPExcel();
@@ -35,7 +34,7 @@
 		if($sheet_name) $objPHPExcel->getActiveSheet()->setTitle($sheet_name);
 		
 		$col = 0 ;
-		$row = 4 ;
+		$row = 2 ;
  		
 		foreach( $data_list as $data){
 		  $col = 0;

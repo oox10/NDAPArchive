@@ -45,7 +45,6 @@
   
   $inedx_mode = 'bulk';
   
-  
   echo "START INDEX [ndap] : ".$total."..\n";
   
   
@@ -62,42 +61,48 @@
 		     "date_detection"=>false
 		    ],
 			'my_type'=>[
+			  '_source' => [
+                    'enabled' => true
+              ],
 			  'properties' => [
                     'data_type' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						'index' => true,
                     ],
 					'zong'=> [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'serial'=> [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'collection'=> [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						'index' => true,
+						"fielddata"=>true
                     ], 
 					'identifier'=> [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
-                    ],
+                        'type' => 'text',
+						'index' => true,
+                        "fielddata"=>true
+					],
 					'meeting_level' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'category_level' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'collection_name' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						'index' => true
                     ],
 					'date_string' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						"fielddata"=>true,
+						'index' => true
                     ],
 					'date_start' => [
                         'type' => 'date',
@@ -107,61 +112,48 @@
                         'type' => 'date',
 						//'index' => 'not_analyzed'
                     ],
-					'abstract' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
-                    ],
-					'abstract_mask' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
-                    ],
-					'fulltext' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
-                    ],
 					'chairman' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						'index' => true
                     ],
 					'main_mamber' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						'index' => true
                     ],
 					'docno' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						'index' => true
                     ],
 					'reference' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						'index' => true
                     ],
 					'pageinfo' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'text',
+						'index' => true
                     ],
 					'yearrange' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'list_member' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'list_organ' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'list_location' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'list_subject' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
 					'_flag_secret' => [
                         'type' => 'boolean',
-						
                     ],
 					'_flag_privacy' => [
                         'type' => 'boolean',
@@ -177,11 +169,10 @@
                     ],
 					'_flag_update' => [
                         'type' => 'boolean',
-						
                     ],
 					'_flag_view' => [
-                        'type' => 'string',
-						'index' => 'not_analyzed'
+                        'type' => 'keyword',
+						'index' => true
                     ],
                ]
 			]
@@ -218,6 +209,7 @@
           ];
 		
 		  $search_array = json_decode($tmp['search_json'],true);
+		  
 		  $params['body'][] = $search_array;
 		  $db->DBLink->query('UPDATE metadata SET _index=1 WHERE system_id='.$tmp['system_id'].';');
 		  
@@ -229,7 +221,7 @@
 		    'id'    => $tmp['system_id'],
 		    'body'  => json_decode($tmp['search_json'],true)
 		  );
-        
+		  
 		  $response = $client->index($params);	
 		  ob_flush();
 		  flush();
@@ -267,7 +259,6 @@
 	  // unset the bulk response when you are done to save memory
       unset($responses);
 	}
-	
 	
 	
   }

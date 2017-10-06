@@ -15,6 +15,8 @@
 	protected $ActiveClass    = '';
 	protected $ActiveAction   = '';
 	
+	
+	
 	//--  Class Initial
 	public function __construct(){
 	  
@@ -85,13 +87,15 @@
 		}
 	  }
 	  
-	  
 	  if(count($result)==1 && array_keys($result)[0]===0){
 		$result = array_pop($result);  
 	  }
 	  
+	  //最終結果
+	  $this->Model->ModuleFinalAction = $action;
+	  
 	  $model_data = array('action'=>$action, 'data'=>$result);
-	  $model_data['version'] = 'forest - collect v1.1 / 2017-06-30'; 
+	  $model_data['version'] = 'ndap - collect v4.0 / 2017-09-30'; 
 	  $model_data['mode']    = $usrmode;
 	  
 	  switch( strtolower($IOType) ){
@@ -153,17 +157,17 @@
 		  break;
 		  
 		case 'xlsx':
-		  if(!$action || !is_file(_SYSTEM_XLSX_PATH.$Theme) ){ 
+		  if(!$action || !is_file(_SYSTEM_ROOT_PATH.'mvc/templates/'.$Theme) ){ 
 		    $view = new Result_HTML;
 			$view->addVar('server','info',$this->Model->Get_Action_Message($message));   
 		    $view->render('wrong');  
 		  }else{
-			$view = new Result_XLSX;  
+			$view = new Result_XLSX;
             $view->setVar('server',$model_data);  
 			$view->render($Theme);  
 		  }
 		  break;
-		
+		  
 		case 'csv':
 		  if(!$action ){ 
 		    $view = new Result_HTML;

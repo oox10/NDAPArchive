@@ -22,24 +22,7 @@
 					<tr> <td >TEL：04-23311111 / E-mail：tpcc@mail.tpa.gov.tw</td> </tr>
 					<tr> <td ></td> </tr>
 					<tr> <td> 系統維護 : 臺大數位人文研究中心 </td></tr>
-					<tr> <td >(02) - 33669847 董小姐 </td> </tr>
+					<tr> <td >TEL：02-33669847 董小姐 </td> </tr>
 				  </table>
 				  
-				  <div class='desc_border'>手冊下載</div>
-				  <p class='format_desc'>
-					<ol class='test_list'>
-					  <li><span class='test_title'>申請系統</span>:<a href='#' target='_blank'> 申請系統操作手冊 </a></li>
-					  <li><span class='test_title'>管理系統</span>:<a href='#' target='_blank'> 管理系統操作手冊 </a></li>  
-					</ol>
-				  </p>
-				  <!--
-				  <div class='desc_border'>底圖來源</div>
-				  <div class='information'>
-				    <div>FREEIMAGES : http://tw.freeimages.com </div>
-				  
-				    <div>林務局官方網站/社群與多媒體/魅力圖庫/觸口生態水道</div>
-					<div>http://www.forest.gov.tw/photos#lg=1&slide=0</div>
-				  
-				  </div>
-				  -->
 			  </div>

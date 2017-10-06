@@ -523,27 +523,128 @@
 	  if(timeplay){
 		var t = timeplay.split(':');
         var start_second = parseInt(t[0])*3600 + parseInt(t[1])*60 + parseInt(t[2]);		 
+	  }else{
+		var start_second = 0;  
 	  }
 	  
-	  
 	  var active_src = 'video.php?src=MEDIA/browse/'+collection+'/'+media_link;  //將要播放位置
-	  
 	  var video = document.getElementById('meta_media_tv');
 	  video.pause();	
 	  
 	  if( video.currentSrc.split('/').pop() != active_src.split('/').pop() ){
 		$('#meta_media_play').attr('src',active_src);  
-		video.load();  
-	  
-	    $('#mediaqueue')
-	  
-	  
+		video.load();
+		$('.act_video_time_get').val('');
 	  }
 	  
 	  video.currentTime = start_second;
 	  video.play();//.prop('autoplay',true);		
+	});
+	
+	//-- control video 
+	$('.act_video_time_control').click(function(  ){
+	  var video = document.getElementById('meta_media_tv');
+	  if(!video.currentSrc){ 
+	    return false;
+	  }
+	  video.pause();	
+	  video.currentTime = parseInt(video.currentTime)+parseInt($(this).data('second'));
+	});
+	
+	//-- get video time
+	$('.act_video_time_get').click(function(){
+	  var video = document.getElementById('meta_media_tv');
+	  if(!video.currentSrc){ 
+	    return false;
+	  }
+	  $(this).val(parseInt(video.currentTime));
+	  
+	  if($(this).attr('id')=='pjimport_stime'){
+		$('#pjimport_etime').val('');  
+	  }
+	})
+	
+	//-- record save to package 
+	$(document).on('click','#act_adfile_package',function(){
+	  
+	  // get reference
+	  var dataroot = $('meta#DATAROOT').data('set');  // 資料分類
+	  var dofolder = $('meta#DOFOLDER').data('set');  // 檔案資料夾
+	  var projectno= 0;
+	  var projectname = '';
+	  
+	  // check recapture 
+	  if(!$('#file_save_package').val()){
+		system_message_alert('','請選擇要存放的專案資料夾');
+		$('#file_save_package').focus();
+		return false;  
+	  }
+	  
+	  projectno = $('#file_save_package').val();
+	  projectname = $('#file_save_package').find('option:selected').html();
+	  
+	  // get select upfile
+	  var video = document.getElementById('meta_media_tv');
+	  if(!video.currentSrc){ 
+	    system_message_alert('',"尚未選擇檔案");
+	    return false;
+	  }
+	  video.pause();	
+	  
+	  if(!$('#pjimport_stime').val()){
+		$('#pjimport_stime').focus()  
+		system_message_alert('',"尚未設定起始時間");
+	    return false;  
+	  }
+	  
+	  if(!$('#pjimport_etime').val()){
+		$('#pjimport_etime').focus()  
+		system_message_alert('',"尚未設定結束時間");
+	    return false;  
+	  }
+	  var video_path = video.currentSrc.split('/');
+	  var video_file = video_path.pop().replace(/\#.*?$/,'');
+	 
+	  // confirm to admin
+	  if(!confirm("確定要轉存所設定的"+video_file+"\n檔案至專案 ["+projectname+"] ?")){
+	    return false;  
+	  }
+	  
+	  var target_files = [];
+	  target_files.push(video_file+'#'+$('#pjimport_stime').val()+'#'+$('#pjimport_etime').val());
+	  
+	  // encode data
+	  var passer_data  = encodeURIComponent(Base64M.encode(JSON.stringify(target_files)));
+	  
+	  // active ajax
+      $.ajax({
+        url: 'index.php',
+	    type:'POST',
+	    dataType:'json',
+	    data: {act:'Meta/dopackage/'+dataroot+dofolder+'/'+passer_data+'/'+projectno},
+		beforeSend: function(){  system_loading(); },
+        error: 		function(xhr, ajaxOptions, thrownError) {  console.log( ajaxOptions+" / "+thrownError);},
+	    success: 	function(response) {
+		  if(response.action){
+			var info = "指定片段已加入專案["+projectname+"]";
+			$('.act_video_time_get').val('');
+			system_message_alert('alert',info);
+			$('#act_selall_dfile').prop('checked',false).trigger('change');
+			//module_information(upload_master_object,'收錄',info,'success');  
+		  }else{
+			//module_information(upload_master_object,'收錄',response.info,'fail');  
+			system_message_alert('',response.info);
+	      }
+	    },
+		complete:	function(){  }
+      }).done(function(r) {  
+	    system_loading(); 
+	    $('#file_save_package').val('');
+	  });  	  
 	  
 	});
+	
+	
 	
 	//-- segment play & pause
 	$(document).on('click','.segment_play',function(){
@@ -594,15 +695,11 @@
 	});
 	
 	
-	
-	
-	
 	//-- segment play & pause
 	$(document).on('click','.segment_edit',function(){
       
 	  var main_dom = $(this).parents('tr.tag_record');	  
       
-	  
 	  var toedit = parseInt(main_dom.attr('edit')) ? false : true;
 	  
 	  if(!toedit){  // 關閉編輯代表要儲存

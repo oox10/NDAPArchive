@@ -23,7 +23,7 @@
 	$target_condition = "DataType='檔案'";
 	$meta_exist = array();
 	
-	$db_insert = $db->DBLink->prepare("INSERT INTO metadata VALUES (NULL,:data_type,:zong,:collection,:identifier,:applyindex,:source_json,:search_json,:dobj_json,:refer_json,:page_count,NULL,'RCDHPaser','NDAPv2','".date('Y-m-d H:i:s')."',:lockmode,:auditint,:checked,:digited,:open,:view,0,1);");
+	$db_insert = $db->DBLink->prepare("INSERT INTO metadata VALUES (NULL,:data_type,:zong,:collection,:identifier,:applyindex,:source_json,:search_json,:dobj_json,:refer_json,:page_count,NULL,'RCDHPaser','NDAPv2','".date('Y-m-d H:i:s')."',:lockmode,:auditint,:checked,:digited,:open,:view,0,0,1);");
 	
 	try{ 
       

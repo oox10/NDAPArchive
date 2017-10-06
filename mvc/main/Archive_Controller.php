@@ -80,13 +80,11 @@
 	  self::data_output('csv','',$this->Model->ModelResult);
 	}
 	
-	
 	// AJAX: get member refer app
 	public function mbrapp($MemberName){
 	  $this->Model->Get_Member_App_Data($MemberName);
 	  self::data_output('json','',$this->Model->ModelResult); 
 	}
-	
 	
 	// PAGE: archive get appply page
 	public function myapply($ApplyCode='',$Page='1-20'){ 

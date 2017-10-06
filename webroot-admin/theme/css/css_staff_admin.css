@@ -26,6 +26,13 @@
 	
 	tr._target td:nth-child(1){background-color:#84b9cb;color:#FFFFFF;}
 	
+	  a.order_by{}
+	  a.order_by > i{display:none;}
+	  a.order_by[mode='0'] > i.fa-sort{display:inline-block;}
+	  a.order_by[mode='1'] > i.fa-long-arrow-up{display:inline-block;}
+	  a.order_by[mode='2'] > i.fa-long-arrow-down{display:inline-block;}
+	  
+	
 /* [ record form ] */
 		
   div#record_form_block{

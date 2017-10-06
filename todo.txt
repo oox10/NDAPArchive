@@ -1,5 +1,9 @@
 TODO:
 
+[ !MUST! ]
+2. photo add & delete
+4. set role priority
+4. import lose archive image
 
 [admin]
 ACCOUNT 
@@ -7,14 +11,9 @@ ACCOUNT
 
 STAFF : 
 - 角色參數設定 (presmission_matrix)
-- 編輯權限
-- 通用參數設定 - O
-- 批次動作處理 - O
-- 搜尋式資料介面(search,page) - O
+- 編輯權限 - 
 - 客戶欄位 - O
 - 新增帳號記數 - O
-- 新增帳號 - O 
-- 上下切換 - O
 
 JOBS : 
 - mail crontab
@@ -24,14 +23,18 @@ META :
 - bath config - O
 - mp3 play - O
 - image resize 
-- member photo
 - priority
-- doupdate
+- doupdate - done print
 - delete
 - create
 - meta order by
-- bath export
 - date search 
+- reorder has to renew imgtemp_buffer
+= upload
+ - 參數設定統一於頁面 META 上(上傳模組目前將檔案路徑與資料夾設定於模組DOM中，需修改)  
+ 
+ 
+- module logs panel
 
 RECORD
 
@@ -41,8 +44,10 @@ EXPORT
 - video view - O
 - read priority - O:差會內IP設定
 - privacy setting 
+- export meta
+- print page 
 
 [service]
-- referenct : video to archive
-- reference : photo to member
-- import: account data
+- referenct : video to archive ? done 100% 
+- reference : photo to member  - O
+- import: account data - O

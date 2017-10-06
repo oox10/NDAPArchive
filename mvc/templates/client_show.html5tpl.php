@@ -18,6 +18,7 @@
 	<script type="text/javascript" src="tool/jquery-mousewheel-3.1.13/jquery.mousewheel.min.js"></script>
 	
 	<script type="text/javascript" src="tool/canvasloader-min.js"></script>	
+	<script type="text/javascript" src="tool/html2canvas.js"></script>	  		
 	<script type="text/javascript" src="tool/jScrollPane/jScrollPane_Group.js"></script>
 	
 	<script type="text/javascript" src="js_library.js"></script>
@@ -50,7 +51,7 @@
   </head>
   
   <body>
-	<div class='system_main_area'>
+	<div class='system_body_area'>
 	  
 	  <div class='system_display_area'>
 	    <!-- 系統內容 -->
@@ -122,20 +123,26 @@
 			  <div class='obj_view' id='image_display' ></div>
 			  <div class='obj_bottom'>
 			    <ul class='obj_option_area' name='<?php echo $data_records['@SystemLink']['field'];?>'>
-                  <li class='obj_opt' >
+                  <li class='obj_opt' id='objswitch'>
 				    共 <span id='img_num'></span> 頁，
 			        <span> 前往 </span>
 					<select id='img_jump' >
 				      <option > P.1 </option>
 				    </select>
 			      </li>
-			      <li class='obj_opt' id='img_ctrl' >
+			      <li class='obj_opt' id='objscale' >
 		            <div class='opt_size_title'>影像倍率</div>
-				    <div class=''  id="opt_size_slider" ></div> 
-			        <div class='opt_size_info' id='ImageSizeRate'>x1.0</div>
+				    <div class='object_scale_control'  >
+					  <span class='page_scale' >
+						<span class='scale_waper'>
+						  <input id='obj_size_slider' type='range' min="70" max="300" value='100' step="10" />
+						  <span  id='scale_info' >1.0</span>
+						</span>
+					  </span>
+					</div>
 			      </li>
-				  <li class='obj_opt' id='ref_block' style='display:none;'>
-				    <span class='ref_title'> 引用連結 :</span> <span class='ref_block' id='ref_address'></span>
+				  <li id='opt_feeddback'>
+				    <a class='option'><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <a id='user_feedback'>系統回報</a></a>
 				  </li>
 			    </ul>
 			  </div>
@@ -159,7 +166,9 @@
 		  </div> <!-- End Of obj_area -->
 	      
 		  <div class='display_function_area'>
-		    <!-- 額外function -->
+		    
+			
+		  
 		  </div> 
 		</div>
 	  </div>  
@@ -182,7 +191,7 @@
 		<div class='feedback_block'>
 		<div class='feedback_header tr_like' >
 		  <span class='fbh_title'> 系統回報 </span>
-		  <a class='fbh_option' id='act_feedback_close' title='關閉' ><i class='mark16 pic_close'></i></a>
+		  <a class='fbh_option' id='act_feedback_close' title='關閉' ><i class="fa fa-times" aria-hidden="true"></i></a>
 		</div>
 		<div class='feedback_body' >
 		  <div class='fb_imgload'> 建立預覽中..</div>
@@ -196,21 +205,20 @@
 			<div class=''>
 			  <span class='fbd_title'>回報類型:</span>
 			  <input type='checkbox' class='feedback_type' name='fbd_type' value='資料問題' ><span >資料問題</span>，
-			  <input type='checkbox' class='feedback_type' name='fbd_type' value='系統問題' ><span >系統問題</span>，
 			  <input type='checkbox' class='feedback_type' name='fbd_type' value='使用問題' ><span >使用問題</span>，
-			  <input type='checkbox' class='feedback_type' name='fbd_type' value='建議回饋' ><span >建議回饋</span>，
-			  <input type='checkbox' class='feedback_type' name='fbd_type' value='其他' >其他:<input type='text' class='fbd_type_other' name='fbd_type_other' value='' >
+			  <input type='checkbox' class='feedback_type' name='fbd_type' value='建議回饋' ><span >內容隱私問題</span>，
+			  <input type='checkbox' class='feedback_type' name='fbd_type' value='其他' >其他:<input type='text' class='fbd_type_other' name='fbd_type_other' value='' placeholder='請描述問題類型'>
 			</div>
 			<div class='fbd_title'>回報描述:</div>
 			<textarea  class='feedback_content'  name='fbd_content'></textarea>
 		  </div>
 		</div>
-		<div class='feedback_bottom tr_like' >
-		  <a class='sysbtn btn_feedback' id='act_feedback_cancel' > <i class='mark16 pic_account_off'></i> 取 消 </a>
-		  <a class='sysbtn btn_feedback' id='act_feedback_submit' > <i class='mark16 pic_account_on'></i> 送 出 </a>		
+		<div class='feedback_bottom' >
+		  <button type='button' class='cancel btn_feedback' id='act_feedback_cancel' > <i class="fa fa-trash-o" aria-hidden="true"></i>  取 消 </button>
+		  <button type='button' class='active btn_feedback' id='act_feedback_submit' > <i class="fa fa-paper-plane-o" aria-hidden="true"></i>  送 出 </button>		
 		</div>
 		</div>
-	</div>  
+	</div>   
     
 	<!-- System Loading -->
     <div class='system_loading_area'>

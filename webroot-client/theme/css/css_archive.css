@@ -3,7 +3,7 @@
 	background:url('../image/wallpaper.png');
   }
   header{
-	background:url('../image/index_background_1.jpg') no-repeat center top fixed; 
+	background:url('../image/index_background_1.jpg') no-repeat center bottom fixed; 
     background-repeat: no-repeat;
     background-size: cover;   
   }
@@ -694,7 +694,12 @@
 				      font-weight:bold;
 					  color:#2c4f54;
 				    } 
-				  
+				    
+					a.zong_redirect{
+					  font-weight:bold;
+					  color:#2c4f54;	
+					}
+					
 				  span.meta_zong_mark{
 					display:inline-flex;
 					min-width:1.7em;
@@ -878,7 +883,7 @@
 				  align-items:flex-start;	
 				}
 				  div.photo_wrapper{
-				    flex:0 0 200px;
+				    flex:0 0 150px;
 				    display:flex;
 					align-items:center;
 					justify-content:space-arround;

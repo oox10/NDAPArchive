@@ -49,7 +49,7 @@
 				break;
 			
 			  // admin
-			  case 'Admin': case 'Main': case 'Staff': case 'Post': case 'Record': case 'Tracking':  case 'Mailer':  case 'Meta':
+			  case 'Admin': case 'Main': case 'Staff': case 'Post': case 'Record': case 'Tracking':  case 'Mailer':  case 'Meta': case 'Project': 
 			  
 				// 檢查登入
 				if(!isset($_SESSION[_SYSTEM_NAME_SHORT]['ADMIN']['LOGIN_TOKEN'])){
@@ -60,12 +60,12 @@
 				$act = strtolower($action);
 				
 				if( isset($_SESSION[_SYSTEM_NAME_SHORT]['ADMIN']['PERMISSION']['*']) ){
-				  //R00 全部通過  	  
+				  //系統預設 R00 為  *.* 全部通過
 				  
 				}else if( isset($_SESSION[_SYSTEM_NAME_SHORT]['ADMIN']['PERMISSION'][$ctl])){
-				  
+                  
 				  $controller_permission = $_SESSION[_SYSTEM_NAME_SHORT]['ADMIN']['PERMISSION'][$ctl];
-				
+				  
 				  if( (isset($controller_permission['*']) && intval($controller_permission['*'])) || 
 				      (isset($controller_permission[$act]) && intval($controller_permission[$act]) ) ){
 					// 符合權限 // 通過	  

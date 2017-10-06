@@ -136,11 +136,6 @@
 .scrollbar-inner > .scroll-element.scroll-draggable .scroll-bar { background-color: #919191; }
 
 
-.scrollbar-inner > .scroll-element .scroll-bar { background-color:#f3f3f2; }
-.scrollbar-inner > .scroll-element:hover .scroll-bar { background-color:  #ffffff; }
-.scrollbar-inner > .scroll-element.scroll-draggable .scroll-bar { background-color: #ffffff; }
-
-
 /* update scrollbar offset if both scrolls are visible */
 
 .scrollbar-inner > .scroll-element.scroll-x.scroll-scrolly_visible .scroll-element_track { left: -12px; }

@@ -19,9 +19,6 @@
     <script type="text/javascript" src="tool/html2canvas.js"></script>	  	
 	<script type="text/javascript" src="tool/Highcharts-5.0.14/code/highcharts.js"></script>
 	
-	<link rel="stylesheet" href="tool/jQRangeSlider-5.7.2/css/classic.css" type="text/css" />
-	<script src="tool/jQRangeSlider-5.7.2/jQDateRangeSlider-min.js"></script>
-	
 	<script type="text/javascript" src="js_library.js"></script>
 	<script type="text/javascript" src="js_client.js"></script>
 	<script type="text/javascript" src="js_archive.js"></script>
@@ -69,6 +66,8 @@
 	
 	//介面欄位填值
 	$dom_val = isset($this->vars['server']['data']['search']['condition']) ? $this->vars['server']['data']['search']['condition'] : array();
+	$mode_advense = count($dom_val)>2 || ( isset($dom_val['query']) && count($dom_val['query'])>1) ? true : false;
+	
 	$dom_pqs = isset($this->vars['server']['data']['search']['postquery']) ? $this->vars['server']['data']['search']['postquery'] : array();
 	$dom_set = isset($this->vars['server']['data']['search']['domconfig']) ? $this->vars['server']['data']['search']['domconfig'] : array();
 	
@@ -79,13 +78,7 @@
 	$term_capture = isset($this->vars['server']['data']['index']['capture']) ? $this->vars['server']['data']['index']['capture'] : '';
 	
 	
-	//var_dump($term_capture);
-	//exit(1);
-	
-	
-	
 	$session = $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT'];
-	
 	
 	$page_info = isset($this->vars['server']['info']) ? $this->vars['server']['info'] : ''; 
 	
@@ -107,11 +100,12 @@
 			  <span id='system_title' ><?php echo _SYSTEM_HTML_TITLE; ?></span>
 			</div>
 			<ul id='navbar-manual'>
-			  <li ><a href='index.php?act=Landing/announcement'>最新消息</a></li>
+			  <li ><a href='index.php?act=Landing/announcement'>首頁</a></li>
 			  <li atthis='1'> 資料檢索 </li>
 			  <li ><a href='index.php?act=Landing/account'>帳號註冊</a></li>
-			  <li ><a href='index.php?act=Archive/apply'>使用說明</a></li>
-			  <li ><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <a id='user_feedback'>錯誤回報</a></li>
+			  <li ><a href='index.php?act=Landing/heaper'>使用說明</a></li>
+			  <li ><a href='index.php?act=Landing/sitelink'>相關連結</a></li>
+			  <li ><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <a id='user_feedback'>系統回報</a></li>
 			</ul>
 		  </div>
 		</header>
@@ -340,7 +334,7 @@
 			<!-- 搜尋 -->
 			<ul class='search_mode'>
 			  <li class='mode_switch '  id='general' >一般查詢</li>
-			  <li class='mode_switch <?php echo count($dom_val)>1 || ( isset($dom_val['query']) && count($dom_val['query'])>1) ? 'atthis':''; ?>'  id='advance' >進階查詢</li>
+			  <li class='mode_switch <?php echo  $mode_advense ? 'atthis':''; ?> '  id='advance'  >進階查詢</li>
 			  <li class='zong_filter' >
 			    <label>資料集：</label>
 				<ul class='zong_picker' >
@@ -682,6 +676,7 @@
 					<div class='result_content'>
 					  
 					  <?php if($meta['@Type']['value']=='biography'): ?>  
+					  
 					  <div class='result_header'>
 						<div class='result_title'>
 						  <div class='result_type'>
@@ -711,6 +706,14 @@
 							<div class='result_field ' >
 							  <span class='field_name'> &#187; <?php echo $meta['@Offer']['field']; ?></span><span class='field_value'><?php echo $meta['@Offer']['value']; ?></span>
 							</div>
+							
+							<?php if(isset($meta['@Redirect'])):?>
+							<div class='result_field ' >
+							  <span class='field_name'> &#187; <?php echo $meta['@Redirect']['field']; ?></span><span class='field_value'><?php echo $meta['@Redirect']['attach']; ?> <a class='zong_redirect' href='<?php echo $meta['@Redirect']['value']; ?>' target='_blank' title='瀏覽照片資料' ><i class="fa fa-picture-o" aria-hidden="true"></i></a></span>
+							</div>
+							<?php endif; ?>
+							
+							
 						  </div>
 						</div>
 						
@@ -940,7 +943,7 @@
 						      <h3>
 							    <label>《<?php echo $refer_content['type'];?>》</label>
 							    <span class='option  online'  apply=''  acckey='<?php echo $refer_content['linkkey'];?>'   ><a target='_new'><?php echo $store_no; ?></a></span>
-								<i> 相似度：<?php echo $refer_content['rate'];?>%</i>
+								<i> 摘要相似度：<?php echo $refer_content['rate'];?>%</i>
 							  </h3>
                               <p><?php echo System_Helper::short_string_utf8($refer_content['info'],150)?></p>
 						    </li>
@@ -1083,7 +1086,7 @@
 		<div class='feedback_block'>
 		<div class='feedback_header tr_like' >
 		  <span class='fbh_title'> 系統回報 </span>
-		  <a class='fbh_option' id='act_feedback_close' title='關閉' ><i class='mark16 pic_close'></i></a>
+		  <a class='fbh_option' id='act_feedback_close' title='關閉' ><i class="fa fa-times" aria-hidden="true"></i></a>
 		</div>
 		<div class='feedback_body' >
 		  <div class='fb_imgload'> 建立預覽中..</div>

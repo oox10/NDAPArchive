@@ -19,7 +19,7 @@
     $db->db_connect('PDO'); 
 	
 	$source_table     = 'metadata';
-	$target_condition = "1";
+	$target_condition = "zong='議事錄'";
 	$meta_exist = array();
 	
 	ob_start();
@@ -113,7 +113,7 @@
 			  '_flag_open'		=>1,  	 	 // 公開檢索     1/0 
 			  '_flag_mask'		=>0,    	 // 含有遮蔽影像 1/0
 			  '_flag_update'	=>0,    	 // 最後更新時間 int
-			  '_flag_view'		=>'公開',    // 開放方式     // 公開、限閱、會內、關閉、實體
+			  '_flag_view'		=>'公開',    // 開放方式     // 開放、限閱、會內、不開放、實體
 			];
 			
 			$search_conf = [];

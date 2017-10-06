@@ -73,7 +73,11 @@
 		  $permission[$tmp['gid']]['group_pri']  = $tmp['ug_pri'];
 		  
 		  $permission[$tmp['gid']]['master'] 	 = $tmp['master'];
-		    
+		  
+		  // get group roles 
+		  $group_roles = array_filter(json_decode($tmp['roles'],true));
+		  $permission[$tmp['gid']]['group_roles'] = $group_roles;
+		  krsort($group_roles);
 		  
 		  /*==[ 取得群組資源過濾條件 ]==*/
 		  // get group permission filter 
@@ -89,25 +93,34 @@
                 default		: $condition = $ru['field']." ".$ru['operator']." '".$ru['contents']."'";	break;			
 			  }
 			  if( !isset($permission[$tmp['gid']]['group_filter'][$ru['table']]) ) $permission[$tmp['gid']]['group_filter'][$ru['table']] = array();
-              $condition    = preg_replace('/#SELF/',$tmp['gid'],$condition);
-			  $permission[$tmp['gid']]['group_filter'][$ru['table']][] = $condition;
+              
+			  
+			  // 檢查是否有限制角色
+			  if( $ru['focus'] && (!isset($group_roles[$ru['focus']]) || !intval($group_roles[$ru['focus']]))     ){
+			    continue;  // 不符條件之角色則跳過
+			  }
+			  
+			  $value_replace=[
+			    'pattern' => ['/#GID/','/#UNO/','/#UID/'],
+			    'replace' => [$tmp['gid'],$this->UserNO,$this->UserID]
+			  ];
+			  
+			  $condition    = preg_replace($value_replace['pattern'],$value_replace['replace'],$condition);
+			  $permission[$tmp['gid']]['group_filter'][$ru['table']][$ru['field']] = $condition;
+			  
 			  
 			  // 影像存取套用於所有客戶端帳號
 			  if($ru['table']=='doaccess'){
 				if(!isset($this->PermissionClient['doaccess'])) $this->PermissionClient['doaccess'] = array();
 				$this->PermissionClient['doaccess'][] =  $condition; 
 			  }
+			  
 			}
 		  }
           
 		  
 		  /*==[ 取得role介面過濾條件 ]==*/
-		   // get group roles 
-		  $group_roles = array_filter(json_decode($tmp['roles'],true));
-		  $permission[$tmp['gid']]['group_roles'] = $group_roles;
-		  krsort($group_roles);
-		  
-		  
+		 
 		  // get group role UI config 
 		  $DB_RUI = $Model->DBLink->prepare(SQL_Account::GET_GROUPS_ROLE_INTERFACE_CONFIG());
 		  $permission[$tmp['gid']]['interface_mask'] = array();

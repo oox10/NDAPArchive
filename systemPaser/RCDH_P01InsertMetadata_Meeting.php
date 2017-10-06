@@ -19,10 +19,10 @@
     $db->db_connect('PDO'); 
 	
 	$source_table     = 'source_meeting';
-	$target_condition = "1";
+	$target_condition = "BookNo LIKE '003d%'";
 	$meta_exist = array();
 	
-	$db_insert = $db->DBLink->prepare("INSERT INTO metadata VALUES (NULL,:data_type,:zong,:collection,:identifier,:applyindex,:source_json,:search_json,:dobj_json,:refer_json,:page_count,NULL,'RCDHPaser','NDAPv2','".date('Y-m-d H:i:s')."',:lockmode,:auditint,:checked,:digited,:open,:view,0,1);");
+	$db_insert = $db->DBLink->prepare("INSERT INTO metadata VALUES (NULL,:data_type,:zong,:collection,:identifier,:applyindex,:source_json,:search_json,:dobj_json,:refer_json,:page_count,NULL,'RCDHPaser','NDAPv2','".date('Y-m-d H:i:s')."',:lockmode,:auditint,:checked,:digited,:open,:view,0,0,1);");
 	
 	try{ 
       
@@ -46,7 +46,7 @@
 		// 初步整編
 		$db_insert->bindValue(':data_type','archive');
 		$db_insert->bindValue(':zong', $source['DataType']);
-	    $db_insert->bindValue(':collection'	,substr($source['StoreNo'],0,14));
+	    $db_insert->bindValue(':collection'	, $source['_sourcefrom']=='TLCDA' ? $source['BookNo'] : substr($source['StoreNo'],0,14));
 	    $db_insert->bindValue(':identifier'	,$source['StoreNo']);
 		$db_insert->bindValue(':applyindex'	,$source['StoreNo']);
 		$db_insert->bindValue(':source_json',json_encode($source,JSON_UNESCAPED_UNICODE));

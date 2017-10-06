@@ -42,12 +42,13 @@
 	$data_limit 	= isset($this->vars['server']['data']['records']['limit'])    ? $this->vars['server']['data']['records']['limit'] : array();
 	$data_page  	= isset($this->vars['server']['data']['records']['page'])    ? $this->vars['server']['data']['records']['page'] : '1-10';
 	$data_type  	= isset($this->vars['server']['data']['records']['type'])    ? $this->vars['server']['data']['records']['type'] : 'all';
-	$data_search  	= isset($this->vars['server']['data']['records']['search'])    ? $this->vars['server']['data']['records']['search'] : '';
+	$html_conf      = isset($this->vars['server']['data']['records']['config'])    ? $this->vars['server']['data']['records']['config'] : '';
 	
 	$page_conf  	= isset($this->vars['server']['data']['page'])    ? $this->vars['server']['data']['page'] : array();
 	
 	//<<Refer from login>> : 登入相依變數
 	$ui_config      = isset($user_info['permission']['interface_mask']) ? $user_info['permission']['interface_mask'] : array();
+	$admin_open   = isset($ui_config['*']) ? true : false;
 	
 	?>
   </head>
@@ -106,8 +107,9 @@
 		    <div class='topic_title'> 群組帳號管理 </div>
 			<div class='topic_descrip'> 群組內之帳號審核、設定與管理 </div>
 		  </div>
-		  <div class='module_setting'>
-		    <h2>模組參數設定</h2>
+		  <div class='module_setting' id='module_setting'>
+		  <?php if( $admin_open || isset($ui_config['admin_staff.html5tpl.php']['module_setting']) && intval($ui_config['admin_staff.html5tpl.php']['module_setting'])): ?> 
+			<h2>模組參數設定</h2>
 			<ul class='mdconfig'>
 			<?php if(isset($module_config['setting'])):?>  
 			<?php   foreach($module_config['setting'] as $i => $mset): ?>
@@ -125,9 +127,10 @@
 			<?php   endforeach; ?>
 			<?php endif; ?>
 			</ul>
+		  <?php endif ?>	
 		  </div> 
 		  <div class='lunch_option'> 
-		    <?php if(isset($ui_config['admin_staff.html5tpl.php']['act_set_gmember']) && intval($ui_config['admin_staff.html5tpl.php']['act_set_gmember'])): ?> 
+		    <?php if($admin_open || isset($ui_config['admin_staff.html5tpl.php']['act_set_gmember']) && intval($ui_config['admin_staff.html5tpl.php']['act_set_gmember'])): ?> 
 			<button type="button" class='active' id='act_set_gmember'><i class="fa fa-users" aria-hidden="true"></i> 設定群組</button>
 			<?php endif ?>
 		  </div>
@@ -144,9 +147,9 @@
 				<input type='radio' name='data_type' value='mbr' <?php echo $data_type=='mbr'?'checked':''; ?> >註冊會員
 				<input type='radio' name='data_type' value='tpa' <?php echo $data_type=='tpa'?'checked':''; ?> >單位帳號
 				<input type='radio' name='data_type' value='self' <?php echo $data_type=='self'?'checked':''; ?> >我的帳號
-				<input type='radio' name='data_type' value='search' <?php echo $data_type=='search'?'checked':''; ?> >搜尋:
+				/ 搜尋:
 				<span class='record_search_field'> 
-				  <input  type='text'   id='data_search_condition' name='data_search' value='<?php echo $data_search;?>' placeholder='輸入搜尋條件'  />
+				  <input  type='text'   id='data_search_condition' name='data_search' value='<?php echo isset($html_conf['condition'])&&$html_conf['condition'] ?$html_conf['condition']:'';?>' placeholder='輸入搜尋條件'  />
 				  <button type='button' class='active' id='act_record_search' ><i class="fa fa-search" aria-hidden="true"></i></button>
 				</span>
 			  </span>
@@ -156,10 +159,13 @@
 			    <span class='record_limit'>  
 			      顯示 :
 				  <select class='record_view' >
-				    <option value='1-5'> 5 </option>
-					<option value='1-10' selected> 10 </option>
-					<option value='all' > ALL </option>
+				    <option value='1-5'   <?php echo $data_limit['range'] =='1-5'	? 'selected': '' ?>  > 5 </option>
+					<option value='1-10'  <?php echo $data_limit['range'] =='1-10'	? 'selected': '' ?> > 10 </option>
+					<option value='1-100' <?php echo $data_limit['range'] =='1-100'	? 'selected': '' ?> > 100 </option>
 				  </select> 筆
+				  <?php if(isset($html_conf['orderby']['name'])):?>
+				  <span> / 排序依 : <?php echo $html_conf['orderby']['name']; ?> : <?php echo $html_conf['orderby']['mode']=='1' ? 'DESC' : 'ASC'; ?></span>
+				  <?php endif;?>
 			    </span>
 				<span class='record_option'>
 				  <a class='sysbtn' id='act_bath_account_pass' title='勾選名單批次通過'> <i class="fa fa-check-circle-o" aria-hidden="true"></i> 批次通過 </a>
@@ -168,13 +174,35 @@
 			  <table class='record_list'>
 		        <tr class='data_field'>
 			      <td title='全選/全不選' ><input type='checkbox' value='_all' class='act_select_all' /></td>
-				  <td title='編號'	> no.</td>
+				  <td title='編號'	>
+				    no.
+				    <a class = 'option order_by' 
+					   order = 'uno'  
+					   name  = '註冊序號' 
+					   mode  = '<?php echo isset($html_conf['orderby']['field']) && $html_conf['orderby']['field']=='uno' ? $html_conf['orderby']['mode'] : '0' ?>' 
+					>
+					  <i class="fa fa-sort" aria-hidden="true"  title='可排序' ></i>
+                      <i class="fa fa-long-arrow-up" aria-hidden="true" title='大到小' ></i>
+					  <i class="fa fa-long-arrow-down" aria-hidden="true"  title='小到大'></i>
+					</a>
+				  </td>
 				  <td title='群組'	>群組</td>
 				  <td title='單位'	>單位</td>
 				  <td title='帳號'	>帳號</td>
 			      <td title='姓名'	>姓名</td>
 				  <td title='電話'	>電話</td>
-				  <td title='註冊時間'	>註冊時間</td>
+				  <td title='註冊時間'	>
+				    註冊時間
+					<a class = 'option order_by' 
+					   order = 'date_register'  
+					   name  = '註冊時間' 
+					   mode  = '<?php echo isset($html_conf['orderby']['field']) && $html_conf['orderby']['field']=='date_register' ? $html_conf['orderby']['mode'] : '0' ?>' 
+					>
+					  <i class="fa fa-sort" aria-hidden="true"  title='可排序' ></i>
+                      <i class="fa fa-long-arrow-up" aria-hidden="true" title='進到遠' ></i>
+					  <i class="fa fa-long-arrow-down" aria-hidden="true"  title='遠到進'></i>
+					</a>
+				  </td>
 				  <td style='text-align:center;' > 狀態 </td>
 				  <td style='text-align:center;' ><i class='sysbtn btn_plus' id='act_staff_new' title='新增群組帳號'> + </i> </td>
 			    </tr>
@@ -286,7 +314,7 @@
 				</div>
 				
 				
-				<?php if(isset($ui_config['admin_staff.html5tpl.php']['roleset']) && intval($ui_config['admin_staff.html5tpl.php']['roleset'])): ?> 
+				<?php if($admin_open || isset($ui_config['admin_staff.html5tpl.php']['roleset']) && intval($ui_config['admin_staff.html5tpl.php']['roleset'])): ?> 
 				<div class='data_col' id='roleset'> 
 				  <label class='data_field'> 帳號角色 </label>
 				  <div class='data_value '> 
@@ -309,7 +337,7 @@
 				  <div class='data_value'> <span class='_variable' name='groups' id="rela_group" ></span> -</div> 
 				</div>
 				
-				<?php if(isset($ui_config['admin_staff.html5tpl.php']['statusset']) && intval($ui_config['admin_staff.html5tpl.php']['statusset'])): ?> 
+				<?php if($admin_open || isset($ui_config['admin_staff.html5tpl.php']['statusset']) && intval($ui_config['admin_staff.html5tpl.php']['statusset'])): ?> 
 				<div class='data_col ' id='statusset'> 
 				  <label class='data_field'> 帳號狀態 </label>
 				  <div class='data_value'> 

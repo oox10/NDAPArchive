@@ -240,29 +240,56 @@
 	  
 	  var paser_data = encodeURIComponent(Base64M.encode(JSON.stringify(records)));
 	  
-	  // active ajax
-      $.ajax({
-        url: 'index.php',
-	    type:'POST',
-	    dataType:'json',
-	    data: {act:'Meta/batch/'+paser_data+'/'+act_action},
-		beforeSend: function(){  system_loading(); },
-        error: 		function(xhr, ajaxOptions, thrownError) {  console.log( ajaxOptions+" / "+thrownError);},
-	    success: 	function(response) {
-		  if(response.action){
-			system_message_alert('alert','已成功執行:'+act_name+' / '+response.data.batch+' 筆');
-			$('#act_record_batch_to').val('');
-			$('.act_selector').prop('checked',false);
-			var batch_set = act_action.split('/');
-			$.each(records,function(i,no){
-			  $(".data_record[no='"+no+"']").find('.status._variable.'+batch_set[0]).attr('data-flag',batch_set[1]);	
-			});
-		  }else{
-			system_message_alert('',response.info);
-	      }
-	    },
-		complete:	function(){  }
-      }).done(function(r) {  system_loading(); });
+	  if(act_action=='export'){
+		
+		//-- 解決 click 後無法馬上open windows 造成 popout 被瀏覽器block的狀況
+	    newWindow = window.open("","_blank");
+		$.ajax({
+		  url: 'index.php',
+		  type:'POST',
+		  dataType:'json',
+		  data: {act:'Meta/batchexport/'+paser_data},
+		  beforeSend: 	function(){ system_loading();  },
+		  error: 		function(xhr, ajaxOptions, thrownError) {  console.log( ajaxOptions+" / "+thrownError);},
+		  success: 		function(response) {
+			if(response.action){  
+			  newWindow.location.href = 'index.php?act=Meta/getexport/'+response.data.batch.fname;
+			}else{
+			  newWindow.close();
+			  system_message_alert('',response.info);
+			}
+		  },
+		  complete:		function(){   }
+	    }).done(function() { system_loading();   });	
+		
+	  }else{
+		  // active ajax
+		  $.ajax({
+			url: 'index.php',
+			type:'POST',
+			dataType:'json',
+			data: {act:'Meta/batch/'+paser_data+'/'+act_action},
+			beforeSend: function(){  system_loading(); },
+			error: 		function(xhr, ajaxOptions, thrownError) {  console.log( ajaxOptions+" / "+thrownError);},
+			success: 	function(response) {
+			  if(response.action){
+				system_message_alert('alert','已成功執行:'+act_name+' / '+response.data.batch+' 筆');
+				$('#act_record_batch_to').val('');
+				$('.act_selector').prop('checked',false);
+				var batch_set = act_action.split('/');
+				$.each(records,function(i,no){
+				  $(".data_record[no='"+no+"']").find('.status._variable.'+batch_set[0]).attr('data-flag',batch_set[1]);	
+				});
+			  }else{
+				system_message_alert('',response.info);
+			  }
+			},
+			complete:	function(){  }
+		  }).done(function(r) {  system_loading(); });  
+		  
+	  }
+	  
+	  
 	});
 	
 	
@@ -298,10 +325,6 @@
 	});
 	
 	
-	
-	
-	
-	
 	//-- export tasks
 	$('#act_export_tasks').click(function(){
       if(!$('.selecter:checked').length){
@@ -311,10 +334,6 @@
 	  var tasks = $('.selecter:checked').map(function(){return $(this).val(); }).get().join(';');
 	  window.open('index.php?act=Built/export/'+tasks);
 	});
-	
-	
-	
-	
 	
 	
 	

@@ -15,8 +15,8 @@
 	$folder_map = array( '檔案'=>'ARCHIVE' , '公報'=>'GAZETTE' , '議事錄'=>'RECORD', '議事影音'=>'MEDIA','活動照片'=>'PHOTO');
 	$file_allow = array('jpg','png','tiff','wmv','mp4','mp3');
 	
-	define('_SOURCE_LOCATION','F:/DigitalStore/');
-	define('_STORE_LOCATION','F:/DigitalStore/');
+	define('_SOURCE_LOCATION','E:/DigitalStore/');
+	define('_STORE_LOCATION','E:/DigitalStore/');
 	
 	
 	//-- load meta assist from db 
@@ -24,7 +24,7 @@
     $db->db_connect('PDO'); 
 	
 	$source_table     = 'metadata';
-	$target_condition = "zong ='檔案' AND dobj_json='[]'";
+	$target_condition = "zong ='議事錄' AND dobj_json='[]'";
 	$meta_exist = array();
 	
 	ob_start();
@@ -186,7 +186,7 @@
 			  
 			  case '議事錄':
 				
-				$source_location = _SOURCE_LOCATION.'0DRTPA-Image/ES-Image/';
+				$source_location = _SOURCE_LOCATION.'ZONGSOURCE/RECORD/';
 				
 				//-- 建構檔案儲存結構
 				if(!is_dir($dobj_store.'/browse/'.$meta['collection'].'/')) mkdir($dobj_store.'/browse/'.$meta['collection'].'/',0777,true);
@@ -196,12 +196,15 @@
 				echo "\n".$meta['collection'].':PASER START..';
 				$do_files = array_slice(scandir($dobj_store.'/browse/'.$meta['collection']),2);
 				
-                $source = json_decode($meta['source_json'],true);                   
-				$path_array = explode('-',$meta['collection']);
-				$location = $path_array[0].'/'.$path_array[1].'/'.( intval($path_array[3]) ? $path_array[2].'-'.$path_array[3] : $path_array[2] ).'/';
-				  
+                $source = json_decode($meta['source_json'],true);  
 				
-				  
+                if($source['_sourcefrom']=='TLCDA'){
+				  $location	= $meta['collection'].'/';
+				}else{
+				  $path_array = explode('-',$meta['collection']);
+				  $location = $path_array[0].'/'.$path_array[1].'/'.( intval($path_array[3]) ? $path_array[2].'-'.$path_array[3] : $path_array[2] ).'/';
+				}				
+				
 				  if(!is_dir($source_location.$location)){ // 無來源資料夾
 					file_put_contents('dopaser.log',date('Y-m-d H:i:s')." [ERROR]\t".$meta['collection']." folder unfound!!" ,FILE_APPEND);
 					continue;    
@@ -231,17 +234,17 @@
 						
 					  foreach($store_folder as $img){
 						   
-						if(preg_match('@-([\d_]+)\.jpg@',$img,$match) ){
+						if(preg_match('@-([\d_]+)\.(jpg|png)@',$img,$match) ){
 						  if(preg_match('/0000_/',$match[1])){
 							$ImageZnumArray[]=$img;
 						  }else{
 							$ImageNumeArray[]=$img;
 						  }  
-						}else if(preg_match('@-(0000_[\w\d]+)\.jpg@',$img)){
+						}else if(preg_match('@-(0000_[\w\d]+)\.(jpg|png)@',$img)){
 							$ImageINumArray[]=$img;
-						}else if(preg_match('@-(ca[\d]+)\.jpg@',$img)){
+						}else if(preg_match('@-(ca[\d]+)\.(jpg|png)@',$img)){
 							$ImageCNumArray[]=$img;
-						}else if(preg_match('@-(ap[\d]+)\.jpg@',$img)){
+						}else if(preg_match('@-(ap[\d]+)\.(jpg|png)@',$img)){
 							$ImageAPnumArray[]=$img;
 						}
 					  }
@@ -264,17 +267,17 @@
 						
 					  foreach($file_list as $img){
 						   
-						if(preg_match('@-([\d_]+)\.jpg@',$img,$match) ){
+						if(preg_match('@-([\d_]+)\.(jpg|png)@',$img,$match) ){
 						  if(preg_match('/0000_/',$match[1])){
 							$ImageZnumArray[]=$img;
 						  }else{
 							$ImageNumeArray[]=$img;
 						  }  
-						}else if(preg_match('@-(0000_[\w\d]+)\.jpg@',$img)){
+						}else if(preg_match('@-(0000_[\w\d]+)\.(jpg|png)@',$img)){
 							$ImageINumArray[]=$img;
-						}else if(preg_match('@-(ca[\d]+)\.jpg@',$img)){
+						}else if(preg_match('@-(ca[\d]+)\.(jpg|png)@',$img)){
 							$ImageCNumArray[]=$img;
-						}else if(preg_match('@-(ap[\d]+)\.jpg@',$img)){
+						}else if(preg_match('@-(ap[\d]+)\.(jpg|png)@',$img)){
 							$ImageAPnumArray[]=$img;
 						}
 					  }
@@ -329,17 +332,27 @@
                   $dobject['position'] = [];
 				  //"PageStart": "0019", "PageEnd": "0021",
 				  $range_flag = 0;
+				  
+				  if($source['_sourcefrom']=='TLCDA'){
+				    $page_start_name = $source['DobjFrom'].'$';
+					$page_end_name   = $source['DobjEnd'].'$';
+				  }else{
+				    $page_start_name = '\-'.$source['PageStart'].'\.';
+				    $page_end_name   = '\-'.$source['PageEnd'].'\.';
+				  }	
+				  
+				  
 				  foreach($book_page_list as $i=>$file_name){
 					
 					if(!$range_flag){
-					  if(preg_match('/\-'.$source['PageStart'].'\./',$file_name)){
+					  if(preg_match('/'.$page_start_name.'/',$file_name)){
 						$range_flag = 1;
 					  }	
 					}
 					
 					if($range_flag){
 					  $dobject['position'][($i+1)] = $file_name;
-					  if(preg_match('/\-'.$source['PageEnd'].'\./',$file_name)){
+					  if(preg_match('/'.$page_end_name.'/',$file_name)){
 					  	$range_flag = 0;
 					    break;
 					  }

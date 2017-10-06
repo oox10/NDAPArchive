@@ -101,9 +101,10 @@
 	});
 	  
 	
-	
-	
-	
+	//-- open sign up
+    $('#act_opensignup').click(function(){
+	   $('#tosignup').trigger('click');
+    });
 	
 	
 	//-- go to index

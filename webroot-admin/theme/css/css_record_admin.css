@@ -1,0 +1,132 @@
+    /* [ Mode Switch ] */ 
+	.admin_mode{ }  
+	  
+	  ul.mode_select{
+		display:inline-flex; 
+		width:50%;
+        font-size:14px;
+		height:100%;
+	  }
+      ul.mode_select > li{
+		width:120px; 
+	    padding:8px 10px;
+		border:0px #CDCDCD solid;
+	    border-bottom:2px #FFFFFF solid;
+		text-align:center;
+	  }
+	  
+      ul.mode_select > li:nth-child(n+2){margin-left:-1px;}
+	  li.mode_switch{cursor:pointer;opacity:0.4;}
+	  li.mode_switch.atthis{ cursor:default;opacity:1; border-bottom:2px #CDCDCD solid;}
+		 
+	  
+	  
+	  ul.element_calculate{
+		flex:1 1 500px;  
+		display:flex;
+		flex-wrap:wrap;		
+	  }
+	    li.zonginfo{
+		  width:150px;
+          margin:0 3px; 		  
+	    }
+		li.zonginfo > label{font-weight:bold; display:block; border-bottom:1px #CDCDCD solid;}
+	    li.zonginfo > div{font-size:0.8em; padding:3px 0;font-family: monospace;}
+	  
+	  
+	  /* page  topic_banner */
+	  button.record_selecter{ height:45px; margin-right:10px;}
+	  
+	  /* page record_control */ 
+	  input[type='text'].record_filter{ width:150px; text-align:center;}
+	  
+	  .record_body > h1{
+		font-weight:bold;
+        padding:10px 0;
+	  }
+	  .record_body > h1:before{
+		display:inline-block;
+        content:"♣ ";
+		margin-right:10px;
+		
+	  }
+	  
+	  /* 統計圖設定*/
+	  .record_chart_block{
+		display:flex;		
+	  }
+	    .record_set{
+		  flex:0 0 50%;	
+		}
+	    #client_search_chart{height:200px;}
+	  
+	    .member_attribute{
+		  display:flex;
+          align-items:center;
+          justify-content:space-between; 		
+	    }
+	    .member_chart{
+		  width:200px;
+          height:200px;		
+	    }
+	  
+	    #client_zong_chart{height:200px;}
+		#client_access_chart{height:200px;}
+		
+		#search_term_table{ width:100% }
+		
+	  
+	  @media screen and (max-width: 1280px) {
+		.record_chart_block{
+		  flex-direction:column;	
+		}
+		.record_set{
+		  flex:1;	
+		}
+	  }
+	  /* 搜尋紀錄 */ 
+	  tr.data_record > td:nth-child(1){width:30px;text-align:right;}
+	  tr.data_record > td:nth-child(2){width:200px;text-align:center;}
+	  tr.data_record > td:nth-child(3){width:100px;}
+	  tr.data_record > td:nth-child(4){min-width:200px;}
+	   
+	  /* 活動紀錄 */ 
+	  table.system_logs{table-layout: fixed;}
+	  tr.actlog > td:nth-child(1){width:40px;text-align:right;}
+	  tr.actlog > td:nth-child(2){width:150px;text-align:center; font-size:0.8em;}
+	  tr.actlog > td:nth-child(3){width:100px;text-align:center; font-size:0.8em;}
+	  tr.actlog > td:nth-child(4){width:100px;overflow: hidden;white-space: nowrap;}
+	  tr.actlog > td:nth-child(5){min-width:200px;overflow: hidden;white-space: nowrap;}
+	  tr.actlog > td:nth-child(6){width:200px;  overflow: hidden;white-space: nowrap;}
+	  tr.actlog > td:nth-child(7){width:200px;  overflow: hidden;white-space: nowrap;}
+	    div.longtext{
+		  display:inline-block;
+		  width:100%;
+		  overflow:hidden;
+          white-space:nowrap;		  
+		}
+	  
+	  
+@media print {
+  div.system_manual_area,div.topic_banner{display:none;}
+  div.system_content_area{
+	display:block;  
+	position:relative;
+	left:0;
+  }
+  div.main_content{padding:0;}
+  div.record_chart_block{  flex-direction:column; page-break-after: always;}
+  div.record_set{ flex:1; }
+  
+  /*
+  body > div {
+    visibility: hidden;
+  }
+  .system_print_area * {
+	visibility: visible;
+  }
+  */
+  
+}	    
+	
+	

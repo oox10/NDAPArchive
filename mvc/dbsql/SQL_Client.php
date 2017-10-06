@@ -24,7 +24,7 @@
 	
 	//-- Client Post :  get post user list 
 	public static function INDEX_GET_POST_LIST(){
-	  $SQL_String = "SELECT pno,post_type,post_from,post_level,post_time_start,post_title,post_content FROM system_post WHERE post_to='申請系統' AND post_display=1 AND post_keep=1 AND ( (NOW() BETWEEN post_time_start AND post_time_end ) OR post_level=4 ) ORDER BY post_level DESC,post_time_start DESC,pno DESC;";
+	  $SQL_String = "SELECT pno,post_type,post_from,post_level,post_time_start,post_title,post_content FROM system_post WHERE post_to='檢索系統' AND post_display=1 AND post_keep=1 AND ( (NOW() BETWEEN post_time_start AND post_time_end ) OR post_level=4 ) ORDER BY post_level DESC,post_time_start DESC,pno DESC;";
 	  return $SQL_String;
 	}  
 	
@@ -164,7 +164,7 @@
 	
 	//-- Client Post:  get post user select 
 	public static function GET_CLIENT_POST_TARGET(){
-	  $SQL_String = "SELECT pno,post_type,post_from,post_level,post_time_start,post_title,post_content,post_hits FROM system_post WHERE post_to IN('申請系統','所有系統') AND post_display=1 AND post_keep=1 AND ( (NOW() BETWEEN post_time_start AND post_time_end ) OR post_level=4 ) AND pno=:pno;";
+	  $SQL_String = "SELECT pno,post_type,post_from,post_level,post_time_start,post_title,post_content,post_hits FROM system_post WHERE post_to IN('檢索系統','所有系統') AND post_display=1 AND post_keep=1 AND ( (NOW() BETWEEN post_time_start AND post_time_end ) OR post_level=4 ) AND pno=:pno;";
 	  return $SQL_String;
 	}
 	

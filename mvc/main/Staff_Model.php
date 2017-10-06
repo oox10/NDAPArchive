@@ -6,7 +6,7 @@
 	/***--  Function Set --***/
     public function __construct(){
 	  parent::__construct();
-	  parent::initial_user($_SESSION[_SYSTEM_NAME_SHORT]['ADMIN']['USER']);
+	  parent::initial_user($_SESSION[_SYSTEM_NAME_SHORT]['ADMIN']['USER']);  
 	}
 	
 	/*[ Staff Function Set ]*/ 
@@ -58,8 +58,7 @@
 	//-- Admin Staff Page Initial 
 	// [input] : RecordType   = (string) all,mbr,tpa,search / mbr;
 	// [input] : PageLimit    = (string) 1-10 / ;
-	// [input] : SearchString = (string) base64_decode ; / RecordType = search 才處理
-	
+	// [input] : SearchString = (string) base64_decode ;  [condition = [] , orderby? = [field: , mode: 0 1 2 ]]
 	public function ADStaff_Get_Staff_List($RecordType,$PageLimit,$SearchString){
 	  
 	  $result_key = parent::Initial_Result('records');
@@ -88,73 +87,61 @@
         $limit_start = (isset($limit[0]) && intval($limit[0]) ) ? intval($limit[0])-1 : 0;
 		$limit_length= (isset($limit[1]) && intval($limit[1]) && intval($limit[1]) > intval($limit[0]) ) ?  (intval($limit[1])-$limit_start) : 10;
 		
-		// 使用者類型，預設為一般使用者，僅能讀取自己的資料
 		$record_count = 0;
 		
+		// 解析頁面建構參數
+		$search_config = json_decode(base64_decode(str_replace('*','/',rawurldecode($SearchString))),true);
 		
-		
-		if( $RecordType !='self' && ((array_key_exists('R00',$this->USER->PermissionNow['group_roles']) && $this->USER->PermissionNow['group_roles']['R00'] ) || 
-		    (array_key_exists('R01',$this->USER->PermissionNow['group_roles'])  )) ){  //&& in_array($this->USER->PermissionNow['group_code'],array('adm','tpa'))
-		  
-          // 依據類型篩選資料
-		  $search_condition = 1;
-		  
-		  switch($RecordType){
-		    case 'mbr': $search_condition = "gid='mbr'"; break;			  
-			case 'tpa': $search_condition = "gid='tpa'"; break;	
-		    case 'search':
-		      
-			  $search_terms = json_decode(base64_decode(str_replace('*','/',rawurldecode($SearchString))),true);
-			  if(is_array($search_terms) && count($search_terms)){
-                $querys = array();
-				
-				foreach($search_terms as $t){
-				  $condition = array();
-				  foreach($search_fields as $f){
-                    $condition[] =  $f." LIKE '%".$t."%'";
-				  }	
-				  $querys[] = "(".join(" OR ",$condition).")"; 
-				}
-
-                $search_condition = count($querys) ? join(' AND ',$querys) : 1;
-			  }
-			  break;
-			  
-			case 'all': default: break;
-		  }
-		  
-		  $DB_COUNT = $this->DBLink->prepare( SQL_AdStaff::SELECT_COUNT_STAFF($search_condition) );
-		  if(!$DB_COUNT->execute()){
-		    throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');  
-	   	  }
-		  $record_count = $DB_COUNT->fetchColumn();	
+        // 依據類型篩選資料
+		$search_condition = [];
 		  
 		  
-		  $DB_OBJ = $this->DBLink->prepare(parent::SQL_Permission_Filter(SQL_AdStaff::SELECT_ALL_STAFF($search_condition)));
-		  $DB_OBJ->bindValue(':page_start',$limit_start,PDO::PARAM_INT);
-		  $DB_OBJ->bindValue(':page_length',$limit_length,PDO::PARAM_INT);
-		  
-		  if(!$DB_OBJ->execute()){
-			throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');  
-	   	  }
-		  $staff_list = $DB_OBJ->fetchAll(PDO::FETCH_ASSOC);	
-		  
-		}else{
-		  $RecordType ='self';
-		  $DB_OBJ = $this->DBLink->prepare(parent::SQL_Permission_Filter(SQL_AdStaff::SELECT_SELF_STAFF()));	
-		  $DB_OBJ->bindValue(':uno',$this->USER->UserNO);	
-		  
-		  if(!$DB_OBJ->execute()){
-		    throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');  
-	   	  }
-        
-		  // 取得帳戶資料
-		  $record_count = 1;
-		  $staff_list = $DB_OBJ->fetchAll(PDO::FETCH_ASSOC);	
+		switch($RecordType){
+		  case 'mbr': $search_condition[] = "gid='mbr'"; break;			  
+		  case 'tpa': $search_condition[] = "gid='tpa'"; break;	  
+		  case 'all':default:  $search_condition[] = 1 ; break;
 		}
+	      
+		// 處理搜尋條件
+		if($search_config && isset($search_config['condition']) && trim($search_config['condition']) ){
+			$terms  = explode('&',$search_config['condition']);
+			$querys = array();
+			foreach($terms as $t){
+			  $condition = array();
+			  foreach($search_fields as $f){
+				$condition[] =  $f." LIKE '%".$t."%'";
+			  }	
+			  $querys[] = "(".join(" OR ",$condition).")"; 
+			}
+			$search_condition[] = join(' AND ',$querys);  
+		}	  
+		  
+        // 處理排序條件
+        if($search_config && isset($search_config['orderby'])){
+		  $order_by_field  = isset($search_config['orderby']['field']) ?  $search_config['orderby']['field'] : 'uno';
+		  $order_by_method = isset($search_config['orderby']['mode'])&&intval($search_config['orderby']['mode']) ?  (intval($search_config['orderby']['mode'])==1 ? 'DESC' : 'ASC') : 'DESC';
+		  $order_by_config = ' ORDER BY '.$order_by_field.' '.$order_by_method;
+		}else{
+		  $order_by_config = ' ORDER BY uno DESC'; 
+		}
+		  
+		$DB_COUNT = $this->DBLink->prepare( parent::SQL_Permission_Filter(SQL_AdStaff::SELECT_COUNT_STAFF($search_condition)) );
+		if(!$DB_COUNT->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');  
+	   	}
+		  
+		$record_count = $DB_COUNT->fetchColumn();	
+		  
+		$DB_OBJ = $this->DBLink->prepare(parent::SQL_Permission_Filter(SQL_AdStaff::SELECT_ALL_STAFF($search_condition,$order_by_config)));
+		$DB_OBJ->bindValue(':page_start',$limit_start,PDO::PARAM_INT);
+		$DB_OBJ->bindValue(':page_length',$limit_length,PDO::PARAM_INT);
+		  
+		if(!$DB_OBJ->execute()){
+	      throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');  
+	   	}
+		$staff_list = $DB_OBJ->fetchAll(PDO::FETCH_ASSOC);	
 		
-		
-		
+       
 		foreach($staff_list as &$staff){
 		  
 		  // 設定帳戶群組
@@ -192,16 +179,15 @@
 		
 		
 		// 共用參數
-		$this->SearchString= isset($search_terms)&&count($search_terms) ? join('&',$search_terms) : '';
-		$this->ResultCount = $record_count;
-		$this->PageNow     = round($limit_start/$limit_length)+1;
+		$this->ResultCount    = $record_count;
+		$this->PageNow        = round($limit_start/$limit_length)+1;
 		$this->LengthEachPage = $limit_length;
 		
 		$result['action'] = true;		
 		$result['data']['type']   = $RecordType;
 		$result['data']['list']   = $staff_list;		
 	    $result['data']['count']  = $record_count;		
-	    $result['data']['search'] = $this->SearchString;		
+	    $result['data']['config'] = $search_config;		
 	    $result['data']['limit']  = array('start'=>$limit_start,'length'=>$limit_length,'range'=> '1-'.$limit_length);	
        	$result['data']['nums']   = $limit_length;
         $result['data']['page']   = $PageLimit;		
@@ -221,9 +207,7 @@
       
 	  try{
         
-		
 		$page_show_max = intval($PagerMaxNum) > 0 ? intval($PagerMaxNum) : 1;
-		
 		
 	    $pages = array();
 		
@@ -302,7 +286,6 @@
 		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
 		}
 	    
-		
 		// 取得使用者 role
 		$staff_data['roles'] = array();
 		$DB_GET	= $this->DBLink->prepare( SQL_AdStaff::ADMIN_STAFF_GET_STAFF_GROUP_ROLES() );
@@ -469,13 +452,22 @@
 		}
 		
 		// STEP.4: insert table:digital_ftpuser   // 加入註冊群組 :uno,:gno,:rno,:creater
-		$role_conf = "COLUMN_CREATE('R00', 0, 'R01', 0, 'R02', 0, 'R03',0, 'R04',0, 'R05', 1)";
+		
+		// 設定角色參數
 		if(count($staff_roles)){
 		  $roleset = array();
 		  foreach($staff_roles as $rcode => $rset){
 			$roleset[]="'".$rcode."',".$rset;	
 		  }	
 		  $role_conf = "COLUMN_CREATE(".join(',',$roleset).")";
+		}else{
+		  $role_set = [];
+		  $DB_OBJ = $this->DBLink->prepare(SQL_AdStaff::GET_ROLES_LIST());
+		  $DB_OBJ->execute();
+		  while($role = $DB_OBJ->fetchAll(PDO::FETCH_ASSOC)){
+		    $role_set[] = "'".$role['rno']."',".$role['_initial'];	
+		  }
+		  $role_conf = "COLUMN_CREATE(".join(',',$role_set).")";
 		}
 		
 		$DB_UGP = $this->DBLink->prepare(SQL_AdStaff::INSERT_GROUP_MEMBER($role_conf));
@@ -485,7 +477,7 @@
 		$DB_UGP->bindvalue(':creater','system');
 		$DB_UGP->execute();
 		
-		// STEP.5 建立資料上載暫存資料夾
+		// STEP.5 建立會員資料夾
 		if(!is_dir(_SYSTEM_USER_PATH.$staff_newa['user_id'])){
 		  mkdir(_SYSTEM_USER_PATH.$staff_newa['user_id'],0777,true);	  
 		}
@@ -576,7 +568,7 @@
 		  $mail->Port       = _SYSTEM_MAIL_PORT;     // set the SMTP port for the GMAIL server
 				
 		  $mail->Host       = _SYSTEM_MAIL_HOST; 	   // SMTP server
-		  $mail->SMTPDebug  = 1;                       // enables SMTP debug information (for testing)
+		  $mail->SMTPDebug  = false;                       // enables SMTP debug information (for testing)
 		  $mail->CharSet 	= "utf-8";
 		  $mail->Username   = _SYSTEM_MAIL_ACCOUNT_USER;  // MAIL username
 		  $mail->Password   = _SYSTEM_MAIL_ACCOUNT_PASS;  // MAIL password

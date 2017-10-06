@@ -1,6 +1,6 @@
     <div>  
 	  <div class='container footer-block'>
-	    
+	    <!--
 		<div class='information'>
 		  <h2> 相關文件 </h2>
 		  <ul>
@@ -20,7 +20,7 @@
 		  </ul>
 		
 		</div>
-	    
+	   
 	    <div class='contact'>
 		  <h2>系統資訊</h2>
 		  <table class='area_admin'>
@@ -29,18 +29,20 @@
 			</tbody>
           </table>
 		</div>
+		 -->
 	  </div>	
 	  <div class='container bottom-block'>
+		<div class='footer-block'>
 		  <div class='copyright'>
-			<div>
-			  Copyright © 2017  臺灣省諮議會版權所有
-			</div>
-			<div class='site_mark'>
-			  <img src='theme/image/mark_gov.jpg' />  
-			</div>
+		    <a href='http://www.tpa.gov.tw' target='_blank'>臺灣省諮議會</a> © 2017 All rights reserved.
+		    <div class='contact'> 
+		      <div> 台中市霧峰區中正路734號 , 電話：04-23311111 </div>
+		    </div>
 		  </div>
-	  
-	     
+		  <div class='site_mark'>
+			<img src='theme/image/mark_gov.jpg' />  
+		  </div>
+	    </div>
 	  </div>
 	</div>	
 		

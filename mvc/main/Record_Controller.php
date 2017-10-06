@@ -23,23 +23,33 @@
 	// PAGE: 統計資料葉面
 	public function index( $D_Start='',$D_to=''){
 	  $this->Model->GetUserInfo();
-	  $this->Model->ADRecord_Get_Apply_Record($D_Start , $D_to);
-	  self::data_output('html','admin_record',$this->Model->ModelResult);
+	  $this->Model->ADRecord_Get_Store_Count();
+	  $this->Model->ADRecord_Get_Search_Record($D_Start , $D_to);
+	  $this->Model->ADRecord_Get_Access_Record($D_Start , $D_to);
+	  self::data_output('html','admin_record_search',$this->Model->ModelResult);
 	}
 	
-	// PAGE: 統計資料葉面
-	public function search( $D_Start='',$D_to='' ){
+	// PAGE: 帳號活動紀錄
+	public function sylogs($D_Start='',$D_to=''){
 	  $this->Model->GetUserInfo();
-	  $this->Model->ADRecord_Get_Apply_Record($D_Start , $D_to);
-	  self::data_output('html','admin_record',$this->Model->ModelResult);
+	  $this->Model->ADRecord_Get_Account_Logs($D_Start,$D_to);
+	  self::data_output('html','admin_record_syslogs',$this->Model->ModelResult);
 	}
 	
-	// FILE: 下載申請清單
-	public function export( $D_Start='',$D_to='' ){
-	  $this->Model->ADRecord_Get_Apply_Record($D_Start , $D_to);
-      $this->Model->ADRecord_Built_Record_File('template_record.xlsx');
-	  self::data_output('file','',$this->Model->ModelResult);
+	// FILE: 下載紀錄
+	public function logssearch( $D_Start='',$D_to='' ){
+	  $this->Model->ADRecord_Export_Search_Logs($D_Start , $D_to);
+      self::data_output('xlsx','template_ndap_search_logs.xlsx',$this->Model->ModelResult);
 	}
+	
+	// FILE: 下載紀錄
+	public function logssystem( $D_Start='',$D_to='' ){
+	  $this->Model->ADRecord_Export_System_Logs($D_Start , $D_to);
+      self::data_output('xlsx','template_ndap_system_logs.xlsx',$this->Model->ModelResult);
+	}
+	
+	
+	
 	
   }
   

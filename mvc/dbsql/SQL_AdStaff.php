@@ -44,18 +44,18 @@
 	
 	
 	//-- Admin Staff : Get Staff Count
-	public static function SELECT_COUNT_STAFF( $Condition = '1' ){
+	public static function SELECT_COUNT_STAFF( $Condition = array(1) ){
 	  $SQL_String = "SELECT count(*) ".
 	                " FROM permission_matrix LEFT JOIN user_login ON uid=uno LEFT JOIN user_info ON user_info.uid=user_login.uno ".
-					" WHERE master=1 AND uno IS NOT NULL AND ".$Condition." ORDER BY uno DESC";
+					" WHERE master=1 AND uno IS NOT NULL AND ".join(' AND ',$Condition);
 	  return $SQL_String;
 	}
 	
 	//-- Admin Staff : Get Staff List
-	public static function SELECT_ALL_STAFF( $Condition = '1' ){
+	public static function SELECT_ALL_STAFF( $Condition = array(), $OrderBySet=' ORDER BY uno DESC' ){
 	  $SQL_String = "SELECT uno,user_id,user_status,date_register,date_open,date_access,user_name,user_mail,user_staff,user_organ,user_tel ".
 	                " FROM permission_matrix LEFT JOIN user_login ON uid=uno LEFT JOIN user_info ON user_info.uid=user_login.uno ".
-					" WHERE master=1 AND uno IS NOT NULL AND ".$Condition." ORDER BY uno DESC LIMIT :page_start,:page_length";
+					" WHERE master=1 AND uno IS NOT NULL AND ".join(' AND ',$Condition)." ".$OrderBySet." LIMIT :page_start,:page_length";
 	  return $SQL_String;
 	}
 	

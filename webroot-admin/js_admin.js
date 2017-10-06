@@ -796,71 +796,7 @@
     setTimeout("showTime()",1000);
   }
   
-  
-  //-- sse event regist
-  var TaskEvent = {};
-  function system_event_regist(even_type,task_no){
-	  
-	if(!parseInt(task_no)){
-	  return false;	
-	}
-	
-	TaskEvent[task_no] = new EventSource("event.php?task="+task_no);
-    TaskEvent[task_no].onmessage = function(event) { console.log(event.data); };
-    
-	switch(even_type){
-	  case 'package':
-        system_event_alert({"task":task_no, "info":"資料匯出打包中.."},'load');
-		TaskEvent[task_no].addEventListener('_PROCESSING', function(e) {
-		  var data = JSON.parse(e.data);
-          $("li[task='"+data.task+"']").find('.progress').html(data.progress);
-        }, false);
-	    
-		TaskEvent[task_no].addEventListener('_PHO_EXPORT', function(e) {
-	      var data = JSON.parse(e.data);
-		  system_event_alert(data,'link');
-		  TaskEvent[task_no].close();
-        }, false);
-	    
-		break;
-	  
-	  case 'import':
-        system_event_alert({"task":task_no, "info":"資料上傳已經完成，檔案轉置中 "},'load');
-		TaskEvent[task_no].addEventListener('_PROCESSING', function(e) {
-	      var data = JSON.parse(e.data);
-          $("li[task='"+data.task+"']").find('.progress').html(data.progress);
-		}, false);
-	    
-		TaskEvent[task_no].addEventListener('_PHO_IMPORT', function(e) {
-	      var data = JSON.parse(e.data);
-		  system_event_alert(data,'done');
-		  TaskEvent[task_no].close();
-        }, false);
-	    
-		break;
-	  default:break;	  
-	}
-	
-	
-  }
-  
-  
-	//-- alert event message
-	function system_event_alert(data,type){
-	  type = type!='' ? type : 'alert'; 
-
-	  var DOM = $("<li/>");
-	  switch(type){
-	    case 'load'  : DOM.attr('task',data.task).html(data.info+" <span class='progress'>0 / 0</span>"); break;
-	    case 'link'  : DOM.addClass('download_link').attr('data-href',data.href).html("資料打包完成，請點選下載 ("+data.count+")"); break;  
-	    case 'done'  : DOM.html("上載資料已匯入系統 ("+data.count+")"); break;  
-	    default: DOM.html(data.info); break;
-	  }
-	  $('#task_info').find('li').hide().end().prepend(DOM);
-	}
-  
-   
-	//-- 若網頁內容更換，則將所有object load 停止
+  //-- 若網頁內容更換，則將所有object load 停止
 	$(window).bind('beforeunload', function() {
 	  if($('video').length){
 		$('video').attr('src','');
@@ -868,8 +804,4 @@
 	    window.stop();  
 	  }
 	});
-	
-	
-   
-	
   

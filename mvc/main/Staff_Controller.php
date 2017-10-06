@@ -15,15 +15,16 @@
 	// PAGE: 員工管理介面 O
 	public function index($DataType='all',$DataPages='1-10',$Search=''){
 	  
-	  $DataType = trim($DataType) ? $DataType:'all';
+	  $DataType  = trim($DataType) ? $DataType:'all';
 	  $DataPages = trim($DataPages) ? $DataPages:'1-10';
 	  
 	  $this->Model->GetUserInfo();
 	  $this->Model->ADStaff_Get_Module_Config();
 	  $this->Model->ADStaff_Get_Staff_List($DataType,$DataPages,$Search);
-	 
+	  
 	  $this->Model->ADStaff_Get_Page_List(5);
 	  self::data_output('html','admin_staff',$this->Model->ModelResult);
+	  
 	}
 	
 	// AJAX: 取得員工資料 O

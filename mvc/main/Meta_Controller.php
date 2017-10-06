@@ -36,13 +36,25 @@
 	
 	
 	// AJAX: 受領任務
-	public function batch($Records,$Action,$Setting){
+	public function batch($Records,$Action,$Setting=''){
 	  switch(strtolower($Action)){
-        case 'export': break;		
-		default: $this->Model->ADMeta_Execute_Batch($Records,strtolower($Action),$Setting); break;	
+        default: $this->Model->ADMeta_Execute_Batch($Records,strtolower($Action),$Setting); break;	  
 	  }
 	  self::data_output('json','',$this->Model->ModelResult);
 	}
+	
+	// AJAX: 受領任務
+	public function batchexport($Records){
+	  $this->Model->ADMeta_Export_Selected($Records);
+	  self::data_output('json','',$this->Model->ModelResult);
+	}
+	
+	// AJAX: 下載打包
+	public function getexport($ExportName){
+	  $this->Model->ADMeta_Access_Export_File($ExportName);
+	  self::data_output('file','',$this->Model->ModelResult);
+	}
+	
 	
 	
 	
@@ -68,11 +80,15 @@
 	}
 	*/
 	
+	
+	/***== [ Meta Admin Module ] 檔案編輯模組  ==***/
+	
 	// PAGE: 資料管理介面 O
 	public function editor($BookNo,$DataNo){
 	  $this->Model->GetUserInfo();
 	  //$this->Model->ADMeta_Get_Meta_Config($Type);
 	  $result = $this->Model->ADMeta_Get_Task_Resouse($BookNo,$DataNo);
+	  
 	  
 	  if($result['data']['form_mode'] == '議事影音'){
 		self::data_output('html','admin_built_media',$this->Model->ModelResult);  
@@ -81,7 +97,6 @@
 	  }else{
 		self::data_output('html','admin_built_print',$this->Model->ModelResult);    
 	  }
-	
 	}
 	
 	/*
@@ -110,6 +125,7 @@
 	  self::data_output('json','',$this->Model->ModelResult); 
 	}
 	
+	
 	// AJAX: 儲存多媒體分件
 	public function media($DataNo,$DataJson){  
 	  $action = $this->Model->ADMeta_Save_Media_Tags($DataNo,$DataJson);
@@ -119,6 +135,54 @@
 	
 	
 	
+	/***== [ 控管數位檔案函數 ] ==***/
+	
+	// AJAX: 讀取數位設定檔
+	public function doconf($DataType,$Folder){  
+	  $action = $this->Model->ADMeta_Read_Dobj_Profile($DataType,$Folder);
+	  self::data_output('json','',$this->Model->ModelResult); 
+	}
+	
+	
+	// AJAX: 重新命名勾選數位檔
+	public function dorename($DataType,$Folder,$FilePreName,$FileStartNum,$DataJson){  
+	  $action = $this->Model->ADMeta_Dobj_Batch_Rename($DataType,$Folder,$FilePreName,$FileStartNum,$DataJson);
+	  self::data_output('json','',$this->Model->ModelResult); 
+	}
+	
+	// AJAX: 重新排序數位檔
+	public function doreorder($DataType,$Folder,$DataJson){  
+	  $action = $this->Model->ADMeta_Dobj_Batch_Reorder($DataType,$Folder,$DataJson);
+	  self::data_output('json','',$this->Model->ModelResult); 
+	}
+	
+	// AJAX: 刪除勾選數位檔
+	public function dodele($DataType,$Folder,$DataJson,$Recapture=''){  
+	  $verificationCode = isset($_SESSION['turing_string']) ? $_SESSION['turing_string'] : NULL;	
+	  $action = $this->Model->ADMeta_Dobj_Batch_Delete($DataType,$Folder,$DataJson,$Recapture,$verificationCode);
+	  self::data_output('json','',$this->Model->ModelResult); 
+	}
+	
+	// AJAX: 打包數位原始檔案
+	public function doprepare($DataType,$Folder,$DoFileName){  
+	  $action = $this->Model->ADMeta_Dobj_Prepare($DataType,$Folder,$DoFileName);
+	  self::data_output('json','',$this->Model->ModelResult); 
+	}
+	
+	// File: 下載數位原始檔案
+	public function dodownload($DownloadHash){  
+	  $action = $this->Model->ADMeta_Dobj_Get_Download($DownloadHash);
+	  self::data_output('file','',$this->Model->ModelResult); 
+	}
+	
+	// File: 專案儲存數位檔案
+	public function dopackage($DataType,$Folder,$DataJson,$ProjectNo){  
+	  $action = $this->Model->ADMeta_Dobj_Project_Import($DataType,$Folder,$DataJson,$ProjectNo);
+	  self::data_output('json','',$this->Model->ModelResult); 
+	}
+	
+	
+	/*
 	// AJAX: 新增資料 
 	public function newaitem($TaskNo,$DataJson){
 	  $action = $this->Model->ADBuilt_Newa_Item_Data($TaskNo,$_SESSION[_SYSTEM_NAME_SHORT]['METACOLLECTION'],$DataJson);
@@ -165,6 +229,11 @@
 	  self::data_output('xlsx','template_built_task_export.xlsx',$this->Model->ModelResult);
 	}
 	
+	
+	*/
+	
+	/* [ Dobj Edit Module ] 數位檔案設定	*/
+	
 	// AJAX : 
 	public function doedit($DataNo,$PageName,$ConfString){
 	  $this->Model->ADMeta_DObj_Conf_Save($DataNo,$PageName,$ConfString);
@@ -178,34 +247,46 @@
 	}
 	
 	
-	/*
-	// AJAX: 取得資料內容
-	public function read($DataNo){
-	  $this->Model->ADMeta_Get_Meta_Data($DataNo);
-	  $this->Model->ADMeta_Get_Meta_DObj($DataNo);
-	  
+	/* [ File Upload Module ] 檔案上傳設定	*/
+	
+	
+	// AJAX: 上傳檢查
+	public function uplinit( $data ){
+      $this->Model->ADMeta_Upload_Task_Initial($data); 
 	  self::data_output('json','',$this->Model->ModelResult);
 	}
 	
-	// AJAX: 儲存資料 
-	public function save($DataNo , $DataJson){
-	  if($DataNo=='_addnew'){
-	    $action = $this->Model->ADPost_Newa_Post_Data($DataJson);
-	  }else{  
-	    $action = $this->Model->ADMeta_Save_Meta_Data($DataNo,$DataJson);
-	  }
-	  
-	  if($action['action']){
-		$this->Model->ADMeta_Get_Meta_Data($action['data']);
-	  }
-	  self::data_output('json','',$this->Model->ModelResult); 
+	// AJAX: 上傳圖片
+	public function upldobj( $Zong, $FolderId, $TimeFlag , $DataPass ){
+      $_FILES['file']['lastmdf'] = $_REQUEST['lastmdf'];
+	  $this->Model->ADMeta_Uploading_Dobj( $Zong, $FolderId , $TimeFlag , $DataPass , $_FILES); 
+	  self::data_output('upload','',$this->Model->ModelResult);
+	}
+	
+	// AJAX: 上傳結束
+	public function uplend( $Zong, $FolderId, $TimeFlag){
+      $this->Model->ADMeta_Upload_Task_Finish($Zong , $FolderId, $TimeFlag); 
+	  self::data_output('json','',$this->Model->ModelResult);
+	}
+	
+	// AJAX: 刪除上傳資料
+	public function upldel( $PassData){
+      $this->Model->ADMeta_Process_Upload_Delete($PassData); 
+	  self::data_output('json','',$this->Model->ModelResult);
+	}
+	
+	// AJAX: 刪除上傳資料
+	public function uplimport( $PassData){
+      $this->Model->ADMeta_Process_Upload_Import($PassData); 
+	  self::data_output('json','',$this->Model->ModelResult);
 	}
 	
 	
-	
-	
-	*/
-	
+	// POST: 更新議員頭像
+	public function mbrpho($DataNo=''){
+	  $this->Model->ADMeta_Upload_Member_Photo($DataNo,$_FILES);
+	  self::data_output('html','admin_callback_reloadportrait',$this->Model->ModelResult); 
+	}
 	
   }
   

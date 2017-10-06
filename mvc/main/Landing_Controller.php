@@ -147,13 +147,10 @@ class Landing_Controller extends Admin_Controller{
 	  self::data_output('html','client_account',$this->Model->ModelResult);
 	}
 	
-	
-	
-	
-	
-	
-	
-	
+	// PAGE: link page 
+	public function sitelink(){
+      self::data_output('html','client_sitelink',$this->Model->ModelResult);
+	}
 	
 	
 	/***--- POST ACTION SET ---***/

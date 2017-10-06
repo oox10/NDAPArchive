@@ -1086,22 +1086,39 @@ body{ background:#eee; }
 	}
 	
 	button[type=button]::-moz-focus-inner { border: 0; }  /* cancel click outline*/
-	
-
+	button{min-height:25px;}
+    
 	button.iconv{ border-color:#dcdddd; border-radius:1px;}
 	button.iconv:hover{  border-color:#949495; }
 	button.iconv:active{ border-color: #007bbb;}
 	button{}
-
+	
 	button.active{ background-color:#5cb85c; border-color:#4cae4c;}
 	button.active:enabled:hover{ background-color: #449d44; border-color: #398439; }
 	button.active:enabled:active{ box-shadow: inset 0px 0px 73px -14px #215C12; }　
 	button{}
-
+    
 	button.cancel{ color:#888888; }
 	button.cancel:enabled:hover{ color:#FFFFFF; background-color: #c9302c; border-color: #ac2925; }
 	button.cancel:enabled:active{ color:#FFFFFF; background-color: #c9302c; box-shadow: inset 0px 0px 73px -14px #8f2e14; }
     
+	button.orange{  background: linear-gradient(to bottom, #ffa84c 0%,#ff7b0d 100%); }
+    button.orange:hover{  background: linear-gradient(to bottom, #ff7400 0%,#ff7400 100%);}
+    button.orange:active{  background: linear-gradient(to bottom, #ff670f 0%,#ff670f 100%); }
+
+    button.blue{  background: linear-gradient(to bottom, #63b6db 0%,#309dcf 100%); }
+    button.blue:hover{ background: linear-gradient(to bottom, #4f85bb 0%,#4f85bb 100%); }
+    button.blue:active{  background: linear-gradient(to bottom, #356aa0 0%,#356aa0 100%); }
+
+    button.green{ background: linear-gradient(to bottom, #6bba70 0%,#6bba70 100%); }
+    button.green:hover{  background: linear-gradient(to bottom, #8fc800 0%,#8fc800 100%);}
+    button.green:active{  background: linear-gradient(to bottom, #6bba70 0%,#6bba70 100%); }
+
+    button.yellow{  background: linear-gradient(to bottom, #ffd65e 0%,#febf04 100%); }
+    button.yellow:hover{background: linear-gradient(to bottom, #febf01 0%,#febf01 100%); }
+    button.yellow:active{  background: linear-gradient(to bottom, #eab92d 0%,#c79810 100%);}
+	
+	
 	._necessary::before{content:" * " ; color:red; display:inline-block; position:absolute; left:0; top:3px;}
 	
 	

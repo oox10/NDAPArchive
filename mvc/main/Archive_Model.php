@@ -293,20 +293,6 @@
 		  throw new Exception('_ARCHIVE_READ_META_CONF_ERROR');  	
 		}
 		
-		// 檢索歷史存入:query_hash,:user_id,:acc_num,:query_string,:page
-		
-		if( is_array($search_sets) && count($search_sets) ){
-		  $query_hash = md5($this->USER->UserID.serialize($search_sets['query']));
-		  $DB_OBJ = $this->DBLink->prepare(SQL_Archive::INSERT_SEARCH_HISTORY_TABLE());
-          $DB_OBJ->bindValue(':query_hash'	, $query_hash );
-		  $DB_OBJ->bindValue(':user_id'		, $this->USER->UserID );
-		  $DB_OBJ->bindValue(':acc_num'		, $this->SearchConf['TEMP_Last_QueryAccNum'] );
-		  $DB_OBJ->bindValue(':query_string', json_encode($search_sets, JSON_UNESCAPED_UNICODE) );
-		  $DB_OBJ->bindValue(':page'		, $this->SearchConf['SET_PageNow'] );
-          $DB_OBJ->execute();    
-		}
-		
-		
 		// 查核accnum
 		/* 2016版已無繼續查詢之設定 因此先註解
 		if( !isset($search_sets['accnum']) ||  !intval($search_sets['accnum']) ){
@@ -337,18 +323,15 @@
 		$this->SearchInfo['action_from']    = $SearchType;
 		$this->SearchInfo['doms_config']    = isset($search_sets['domconf']) ? $search_sets['domconf'] : array();  // 介面設定參數
 		
-		
 		// 處理參數，防止進入過濾階段
 		unset($search_sets['domconf']);
 		unset($search_sets['accnum']);
-		
-	    
 		
 		// 依據情形處理對應參數
 		switch($SearchType){
 		  
 		  case 'index': //取得最後一次檢索結果
-		    
+		    $search_sets['query'][] = ['field'=>'zong','value'=>'檔案|公報|議事錄|議事影音']; 
 			$user_query_normal_set[] = array('field'=>'data_type','value'=>['archive'],'attr'=>'+');
 			
 			/*
@@ -538,6 +521,20 @@
 			
 		  default: break;	
 		}
+		
+		
+		// 檢索歷史存入:query_hash,:user_id,:acc_num,:query_string,:page
+		if( is_array($search_sets) && count($search_sets) ){
+		  $query_hash = md5($this->USER->UserID.serialize($search_sets['query']));
+		  $DB_OBJ = $this->DBLink->prepare(SQL_Archive::INSERT_SEARCH_HISTORY_TABLE());
+          $DB_OBJ->bindValue(':query_hash'	, $query_hash );
+		  $DB_OBJ->bindValue(':user_id'		, $this->USER->UserID );
+		  $DB_OBJ->bindValue(':acc_num'		, $this->SearchConf['TEMP_Last_QueryAccNum'] );
+		  $DB_OBJ->bindValue(':query_string', json_encode($search_sets, JSON_UNESCAPED_UNICODE) );
+		  $DB_OBJ->bindValue(':page'		, $this->SearchConf['SET_PageNow'] );
+          $DB_OBJ->execute();    
+		}
+		
 		
 		//var_dump( $parent_query_term_set);
 	    //var_dump( $user_query_normal_set);
@@ -980,11 +977,11 @@
 			  $this->LevelTarget = join('',$query_set['value']);
 			  break;
 			
-			case 'person':
-            case 'location':
-            case 'keywords':
-			case 'from_date':
-			case 'to_date':
+			case 'list_member':
+            case 'list_organ':
+            case 'list_location':
+			case 'list_subject':
+			case 'date_string':
 			  $query_string[] = $query_set['attr'].$query_set['field'].':(*'.join('* OR *',$query_set['value']).'*)';
               break;
 			  
@@ -1155,6 +1152,7 @@
 		}
         
 		
+		
 		// 夾綴詞功能
 		if( $advance_mode ){
 		  
@@ -1179,8 +1177,11 @@
 			  $hits  = 0;
 			  $terms = array();
 			  $yfilter= array();
+			  $field_pool = ["abstract","fulltext"];
+			  
+			  
 			  $appara = $params;
-			  $appara['body']['query']['query_string']['fields']=["description","name"];
+			  $appara['body']['query']['query_string']['fields']=$field_pool;
 			  
 			  do{
 				ini_set('memory_limit', '1000M');
@@ -1202,6 +1203,7 @@
 				$records  = $totalhit ? $response['hits']['hits']:array();
 				
 				
+				
 				// 如果查詢結果超過 10000 則利用年代分布分片資料
 				
 				if( $totalhit > 10000 ){
@@ -1218,9 +1220,14 @@
 				
 				foreach($records as $meta ){   
 				  
-				  $text_pool = $meta['_source']['name'];
-				  $text_pool.= isset($meta['_source']['description']) ? ';'.$meta['_source']['description'] : '';
-				  $text_pool = preg_replace('/([\x00-\x2F\x3A-\x40\x5B-\x5F\x7B-\x7F])/','',$text_pool);
+				  $text_pool = '';
+				  foreach($field_pool as $fp){
+					$text_pool.= isset($meta['_source'][$fp]) ? ';'.(is_array($meta['_source'][$fp])?join(';',$meta['_source'][$fp]) : $meta['_source'][$fp]) : '';  
+				  }
+				 
+				  $text_pool = preg_replace('/([\x00-\x2F\x3A-\x40\x5B-\x5F\x7B-\x7F])/','_',$text_pool);
+				  
+				  
 				  
 				  if(preg_match_all('/'.$advance_mode.'/u',$text_pool,$matchs,PREG_PATTERN_ORDER )){
 					foreach( $matchs[0] as $match){
@@ -1404,8 +1411,15 @@
 		$zong_year = array_keys($year_range);
 		$zong_chart= array_combine($zong_year,array_fill(0, count($zong_year),0));
 		
-		// 建立資料集hart
+		// 建立資料集chart
 		if(is_array($this->ResultZongAgg)&&count($this->ResultZongAgg)){
+		  //echo "<pre>";	 var_dump($this->ResultZongAgg);exit(1);
+		  
+		  //zong chart 分兩類
+		  $zong_year = array_keys($year_range);
+		  $zong_archive_chart  = array_combine($zong_year,array_fill(0, count($zong_year),0));	
+		  $zong_meetting_chart = array_combine($zong_year,array_fill(0, count($zong_year),0));
+		  
 		  foreach($this->ResultZongAgg as $pq_zong){
 			
 			if(!isset($pq_zong['ycount']['buckets']) || !count($pq_zong['ycount']['buckets'])){
@@ -1413,34 +1427,29 @@
 			}
 			
 			if($pq_zong['key']=='檔案'){
-			  $zong_year = array_keys($year_range);
-		      $zong_chart= array_combine($zong_year,array_fill(0, count($zong_year),0));	
 				
 			  foreach($pq_zong['ycount']['buckets'] as $pqzy){
 				$yindex = intval(substr($pqzy['key'],0,4));
-				if(!isset($zong_chart[$yindex])){
+				if(!isset($zong_archive_chart[$yindex])){
 				  continue;	
 				} 
-				$zong_chart[$yindex] = array('name'=>'西元'.$yindex.'年','y'=>$pqzy['doc_count']);
+				$zong_archive_chart[$yindex] = array('name'=>'西元'.$yindex.'年','y'=>$pqzy['doc_count']);
 			  }
-			  $Chart_Data['data_file'] = array_values($zong_chart);
-			  
-			  $zong_year = array_keys($year_range);
-		      $zong_chart= array_combine($zong_year,array_fill(0, count($zong_year),0));
-		
+			  $Chart_Data['data_file'] = array_values($zong_archive_chart);
+			
 			}else if($pq_zong['key']=='公報' || $pq_zong['key']=='議事錄' || $pq_zong['key']=='議事影音'){
 			  foreach($pq_zong['ycount']['buckets'] as $pqzy){
 				$yindex = intval(substr($pqzy['key'],0,4));
-				if(!isset($zong_chart[$yindex])){
+				if(!isset($zong_meetting_chart[$yindex])){
 				  continue;	
 				}
-                if(isset($zong_chart[$yindex]['name'])){
-				  $zong_chart[$yindex]['y'] += $pqzy['doc_count'];	
+                if(isset($zong_meetting_chart[$yindex]['name'])){
+				  $zong_meetting_chart[$yindex]['y'] += $pqzy['doc_count'];	
 				}else{
-				  $zong_chart[$yindex] = array('name'=>'西元'.$yindex.'年','y'=>$pqzy['doc_count']);	
+				  $zong_meetting_chart[$yindex] = array('name'=>'西元'.$yindex.'年','y'=>$pqzy['doc_count']);	
 				}
 			  }
-			  $Chart_Data['data_meet'] = array_values($zong_chart);	
+			  $Chart_Data['data_meet'] = array_values($zong_meetting_chart);	
 			}
 			
 		  }	
@@ -1500,7 +1509,7 @@
 	  $meta_display_config= json_decode(_ARCHIVE_META_DISPLAY_CONFIG,true);
 	  $result_link_map    = '';
 	  
-	  $auth_list = array("丁瑞彬"=>1,"任公藩"=>1,"何寶珍"=>1,"何春木"=>1,"何義"=>1,"何茂取"=>1,"余慎"=>1,"余政道"=>1,"余玲雅"=>1,"余陳月瑛"=>1,"侯惠仙"=>1,"傅學鵬"=>1,"傅文政"=>1,"凃麗生"=>1,"劉傳來"=>1,"劉克"=>1,"劉兼善"=>1,"劉守成"=>1,"劉定國"=>1,"劉文雄"=>1,"劉明朝"=>1,"劉榭燻"=>1,"劉濶才"=>1,"劉炳偉"=>1,"劉邦友"=>1,"劉銓忠"=>1,"卜慶葵"=>1,"古燧昌"=>1,"吳一衛"=>1,"吳伯雄"=>1,"吳國棟"=>1,"吳大清"=>1,"吳文妃"=>1,"吳水雲"=>1,"吳泉洝"=>1,"吳瑞泰"=>1,"吳益利"=>1,"吳鴻森"=>1,"呂俊傑"=>1,"呂吉助"=>1,"呂安德"=>1,"呂永凱"=>1,"呂秀惠"=>1,"呂進芳"=>1,"呂錦花"=>1,"周慧瑛"=>1,"周清玉"=>1,"周滄淵"=>1,"周細滿"=>1,"周錫瑋"=>1,"姚冬聲"=>1,"宋艾克"=>1,"官來壽"=>1,"廖朝錩"=>1,"廖枝源"=>1,"廖榮祺"=>1,"廖泉裕"=>1,"廖秉輝"=>1,"廖繼魯"=>1,"張丁誥"=>1,"張俊宏"=>1,"張俊雄"=>1,"張堅華"=>1,"張學舜"=>1,"張富"=>1,"張振生"=>1,"張文獻"=>1,"張明雄"=>1,"張朝權"=>1,"張清芳"=>1,"張溫鷹"=>1,"張濰濱"=>1,"張瑞麒"=>1,"張福興"=>1,"張蔡美"=>1,"張豐緒"=>1,"張貴木"=>1,"張賢東"=>1,"張郭秀霞"=>1,"張錫褀"=>1,"彭德"=>1,"彭添富"=>1,"徐享城"=>1,"徐堅"=>1,"徐慶元"=>1,"徐輝國"=>1,"戴麗華"=>1,"方醫良"=>1,"施松輝"=>1,"施治明"=>1,"施金協"=>1,"施鐘响"=>1,"曹啟鴻"=>1,"曾華德"=>1,"曾蔡美佐"=>1,"朱有福"=>1,"李儒侯"=>1,"李儒將"=>1,"李友三"=>1,"李子駸"=>1,"李存敬"=>1,"李崇禮"=>1,"李文來"=>1,"李文正"=>1,"李明通"=>1,"李炳盛"=>1,"李烏棕"=>1,"李玉泉"=>1,"李秋遠"=>1,"李萬居"=>1,"李詩益"=>1,"李銑"=>1,"李雅景"=>1,"李雅樵"=>1,"林世南"=>1,"林久翔"=>1,"林亮雲"=>1,"林仙保"=>1,"林佾廷"=>1,"林傳旺"=>1,"林再生"=>1,"林南生"=>1,"林國龍"=>1,"林壁輝"=>1,"林宗男"=>1,"林忠信"=>1,"林文雄"=>1,"林日高"=>1,"林明德"=>1,"林明正"=>1,"林春德"=>1,"林樂善"=>1,"林正二"=>1,"林水木"=>1,"林淵熙"=>1,"林清松"=>1,"林源山"=>1,"林漢周"=>1,"林澄增"=>1,"林火順"=>1,"林為寬"=>1,"林為恭"=>1,"林爾昌"=>1,"林牛港"=>1,"林獻堂"=>1,"林王紫燕"=>1,"林瑞昌"=>1,"林益川"=>1,"林福地"=>1,"林秋龍"=>1,"林義雄"=>1,"林羵羊"=>1,"林耿清"=>1,"林聯登"=>1,"林虛中"=>1,"林連宗"=>1,"林進春"=>1,"林錫耀"=>1,"柯明謀"=>1,"柯水源"=>1,"梁道"=>1,"楊仁福"=>1,"楊天賦"=>1,"楊文欣"=>1,"楊泰順"=>1,"楊玉城"=>1,"楊瓊瓔"=>1,"楊秋興"=>1,"楊罄宜"=>1,"楊金寶"=>1,"楊陶"=>1,"歐石秀"=>1,"殷占魁"=>1,"江上清"=>1,"江恩"=>1,"洪周金女"=>1,"洪性榮"=>1,"洪振宗"=>1,"洪文泰"=>1,"洪木村"=>1,"洪火煉"=>1,"洪約白"=>1,"涂延卿"=>1,"游任和"=>1,"游月霞"=>1,"游錫堃"=>1,"湯慶松"=>1,"王世勛"=>1,"王兆釧"=>1,"王吟貴"=>1,"王慶豐"=>1,"王添灯"=>1,"王玲惠"=>1,"王顯明"=>1,"白世維"=>1,"白權"=>1,"白炳輝"=>1,"盧根德"=>1,"盧秀燕"=>1,"盧逸峰"=>1,"祝畫澄"=>1,"程惠卿"=>1,"章博隆"=>1,"童福來"=>1,"簡明景"=>1,"簡欣哲"=>1,"簡盛義"=>1,"簡維章"=>1,"簡金卿"=>1,"簡錦益"=>1,"羅明旭"=>1,"翁文德"=>1,"苗素芳"=>1,"莊北斗"=>1,"莊姬美"=>1,"莊金生"=>1,"華加志"=>1,"華清吉"=>1,"葉國光"=>1,"葉宜津"=>1,"葉黃鵲喜"=>1,"董榮芳"=>1,"董錦樹"=>1,"蔡介雄"=>1,"蔡來福"=>1,"蔡建生"=>1,"蔡文玉"=>1,"蔡江來"=>1,"蔡江淋"=>1,"蔡端仁"=>1,"蔡聰明"=>1,"蔡讚雄"=>1,"蔡陳翠蓮"=>1,"蔣天降"=>1,"蔣淦生"=>1,"蔣渭川"=>1,"蕭錫齡"=>1,"藍榮祥"=>1,"蘇俊雄"=>1,"蘇惟梁"=>1,"蘇文雄"=>1,"蘇治洋"=>1,"蘇洪月嬌"=>1,"蘇貞昌"=>1,"蘇順國"=>1,"許信良"=>1,"許寬茂"=>1,"許新枝"=>1,"許登宮"=>1,"許素葉"=>1,"許記盛"=>1,"謝三升"=>1,"謝修平"=>1,"謝崑山"=>1,"謝明琳"=>1,"謝東春"=>1,"謝水藍"=>1,"謝清雲"=>1,"謝漢儒"=>1,"謝漢津"=>1,"謝章捷"=>1,"謝言信"=>1,"謝許英"=>1,"謝貴"=>1,"謝鈞惠"=>1,"賴志榮"=>1,"賴榮松"=>1,"賴樹旺"=>1,"賴誠吉"=>1,"趙森海"=>1,"趙綉娃"=>1,"趙良燕"=>1,"連錦水"=>1,"邱仕豐"=>1,"邱創良"=>1,"邱泉華"=>1,"邱益三"=>1,"邱茂男"=>1,"邱連輝"=>1,"邱鏡淳"=>1,"郭俊銘"=>1,"郭吳合巧"=>1,"郭國基"=>1,"郭岐"=>1,"郭榮振"=>1,"郭雨新"=>1,"鄭品聰"=>1,"鄭國忠"=>1,"鄭大洽"=>1,"鄭宋柳"=>1,"鄭文鍵"=>1,"鄭李惠"=>1,"鄭貞德"=>1,"鄭逢時"=>1,"鄭金玲"=>1,"金萬里"=>1,"鍾德珍"=>1,"鍾紹和"=>1,"陳世叫"=>1,"陳啟吉"=>1,"陳天錫"=>1,"陳學益"=>1,"陳希哲"=>1,"陳建年"=>1,"陳志彬"=>1,"陳恆隆"=>1,"陳愷"=>1,"陳慶春"=>1,"陳按察"=>1,"陳振宗"=>1,"陳振雄"=>1,"陳文石"=>1,"陳新發"=>1,"陳施蕊"=>1,"陳旺成"=>1,"陳昌瑞"=>1,"陳明文"=>1,"陳景星"=>1,"陳根塗"=>1,"陳榮盛"=>1,"陳歐珀"=>1,"陳洦汾"=>1,"陳清棟"=>1,"陳照郎"=>1,"陳義秋"=>1,"陳興盛"=>1,"陳茂堤"=>1,"陳華宗"=>1,"陳超明"=>1,"陳進祥"=>1,"陳重光"=>1,"陳金德"=>1,"陳錦相"=>1,"陳錫章"=>1,"韓石泉"=>1,"顏欽賢"=>1,"顏清標"=>1,"馬有岳"=>1,"馬榮吉"=>1,"高崇熙"=>1,"高恭"=>1,"高文良"=>1,"高育仁"=>1,"高順賢"=>1,"高龍雄"=>1,"魏東安"=>1,"魏綸洲"=>1,"魏雲杰"=>1,"黃光平"=>1,"黃國展"=>1,"黃國政"=>1,"黃奇正"=>1,"黃朝琴"=>1,"黃木添"=>1,"黃正義"=>1,"黃永欽"=>1,"黃永聰"=>1,"黃玉嬌"=>1,"黃秀孟"=>1,"黃秀森"=>1,"黃純青"=>1,"黃聯登"=>1,"黃聲鏞"=>1,"黃英雄"=>1,"黃金鳳"=>1,"黃鈴雄"=>1,"黃鎮岳"=>1,"黃陳瑟"=>1,"黃高碧桃"=>1,);
+	  $auth_list = array("黃朝琴"=>1,"李萬居"=>1,"丁瑞彬"=>1,"王添灯"=>1,"任公藩"=>1,"何義"=>1,"吳瑞泰"=>1,"吳鴻森"=>1,"呂永凱"=>1,"李友三"=>1,"李崇禮"=>1,"林日高"=>1,"林世南"=>1,"林為恭"=>1,"林連宗"=>1,"林虛中"=>1,"林瑞昌"=>1,"林壁輝"=>1,"林獻堂"=>1,"洪火煉"=>1,"洪約白"=>1,"殷占魁"=>1,"馬有岳"=>1,"高恭"=>1,"高順賢"=>1,"張振生"=>1,"張瑞麒"=>1,"張錫祺"=>1,"梁道"=>1,"郭雨新"=>1,"郭國基"=>1,"陳文石"=>1,"陳旺成"=>1,"陳按察"=>1,"陳茂堤"=>1,"陳振宗"=>1,"陳清棟"=>1,"彭德"=>1,"華清吉"=>1,"黃純青"=>1,"黃聯登"=>1,"楊陶"=>1,"楊天賦"=>1,"楊金寶"=>1,"劉明朝"=>1,"劉兼善"=>1,"劉傳來"=>1,"劉濶才"=>1,"蔣渭川"=>1,"鄭品聰"=>1,"盧根德"=>1,"謝水藍"=>1,"謝漢儒"=>1,"韓石泉"=>1,"顏欽賢"=>1,"蘇惟梁"=>1,"卜慶葵"=>1,"何茂取"=>1,"吳泉洝"=>1,"呂錦花"=>1,"李秋遠"=>1,"李烏棕"=>1,"林牛港"=>1,"林王紫燕"=>1,"林益川"=>1,"林澄增"=>1,"姚冬聲"=>1,"徐堅"=>1,"張富"=>1,"張豐緒"=>1,"章博隆"=>1,"莊北斗"=>1,"許記盛"=>1,"許寬茂"=>1,"郭岐"=>1,"陳愷"=>1,"陳世叫"=>1,"陳重光"=>1,"陳新發"=>1,"陳錦相"=>1,"黃高碧桃"=>1,"黃國政"=>1,"劉定國"=>1,"蔡文玉"=>1,"鄭宋柳"=>1,"謝清雲"=>1,"簡欣哲"=>1,"魏東安"=>1,"白世維"=>1,"余陳月瑛"=>1,"吳一衛"=>1,"李銑"=>1,"李炳盛"=>1,"李雅樵"=>1,"林明德"=>1,"林亮雲"=>1,"林為寬"=>1,"林福地"=>1,"徐享城"=>1,"徐輝國"=>1,"張文獻"=>1,"許新枝"=>1,"陳華宗"=>1,"陳興盛"=>1,"黃光平"=>1,"黃奇正"=>1,"楊玉城"=>1,"廖秉輝"=>1,"蔣天降"=>1,"蔣淦生"=>1,"鄭大洽"=>1,"賴樹旺"=>1,"謝貴"=>1,"王吟貴"=>1,"古燧昌"=>1,"何寶珍"=>1,"吳伯雄"=>1,"呂安德"=>1,"呂俊傑"=>1,"李文正"=>1,"李存敬"=>1,"林傳旺"=>1,"邱仕豐"=>1,"凃麗生"=>1,"高育仁"=>1,"陳希哲"=>1,"陳恆隆"=>1,"陳根塗"=>1,"陳慶春"=>1,"陳學益"=>1,"湯慶松"=>1,"黃金鳳"=>1,"楊罄宜"=>1,"葉黃鵲喜"=>1,"董錦樹"=>1,"趙森海"=>1,"蔡介雄"=>1,"蔡建生"=>1,"蔡陳翠蓮"=>1,"蔡聰明"=>1,"蔡讚雄"=>1,"蕭錫齡"=>1,"賴榮松"=>1,"魏綸洲"=>1,"白權"=>1,"朱有福"=>1,"江恩"=>1,"吳水雲"=>1,"李子駸"=>1,"李玉泉"=>1,"李儒侯"=>1,"官來壽"=>1,"林佾廷"=>1,"林秋龍"=>1,"林耿清"=>1,"林爾昌"=>1,"邱連輝"=>1,"施金協"=>1,"柯明謀"=>1,"洪木村"=>1,"涂延卿"=>1,"高龍雄"=>1,"張丁誥"=>1,"張堅華"=>1,"張郭秀霞"=>1,"張賢東"=>1,"張濰濱"=>1,"許信良"=>1,"郭吳合巧"=>1,"陳天錫"=>1,"陳昌瑞"=>1,"陳施蕊"=>1,"陳洦汾"=>1,"陳義秋"=>1,"華加志"=>1,"黃秀森"=>1,"黃英雄"=>1,"黃陳瑟"=>1,"黃鎮岳"=>1,"葉國光"=>1,"廖榮祺"=>1,"趙綉娃"=>1,"歐石秀"=>1,"蔡江來"=>1,"蔡江淋"=>1,"蔡來福"=>1,"蔡端仁"=>1,"鄭貞德"=>1,"戴麗華"=>1,"謝明琳"=>1,"謝修平"=>1,"謝崑山"=>1,"謝許英"=>1,"簡維章"=>1,"藍榮祥"=>1,"王顯明"=>1,"白炳輝"=>1,"何春木"=>1,"呂秀惠"=>1,"李詩益"=>1,"周滄淵"=>1,"林文雄"=>1,"林再生"=>1,"林忠信"=>1,"林義雄"=>1,"林漢周"=>1,"林樂善"=>1,"邱益三"=>1,"施鐘响"=>1,"柯水源"=>1,"洪振宗"=>1,"苗素芳"=>1,"祝畫澄"=>1,"高崇熙"=>1,"張俊宏"=>1,"張俊雄"=>1,"張貴木"=>1,"莊金生"=>1,"陳金德"=>1,"陳錫章"=>1,"傅文政"=>1,"黃永欽"=>1,"黃玉嬌"=>1,"黃國展"=>1,"廖泉裕"=>1,"廖朝錩"=>1,"劉邦友"=>1,"劉榭燻"=>1,"鄭李惠"=>1,"賴志榮"=>1,"蘇俊雄"=>1,"蘇洪月嬌"=>1,"蘇順國"=>1,"余慎"=>1,"余玲雅"=>1,"吳益利"=>1,"呂吉助"=>1,"李文來"=>1,"李儒將"=>1,"林羵羊"=>1,"林水木"=>1,"林火順"=>1,"林仙保"=>1,"林清松"=>1,"林源山"=>1,"林聯登"=>1,"邱泉華"=>1,"施松輝"=>1,"洪性榮"=>1,"陳啟吉"=>1,"游錫堃"=>1,"童福來"=>1,"黃秀孟"=>1,"黃聲鏞"=>1,"廖枝源"=>1,"廖繼魯"=>1,"劉炳偉"=>1,"鄭文鍵"=>1,"鄭逢時"=>1,"謝三升"=>1,"謝東春"=>1,"謝鈞惠"=>1,"謝漢津"=>1,"簡明景"=>1,"簡盛義"=>1,"簡錦益"=>1,"魏雲杰"=>1,"蘇貞昌"=>1,"方醫良"=>1,"王兆釧"=>1,"王玲惠"=>1,"吳大清"=>1,"吳文妃"=>1,"吳國棟"=>1,"呂進芳"=>1,"李明通"=>1,"李雅景"=>1,"周細滿"=>1,"林宗男"=>1,"林明正"=>1,"林國龍"=>1,"施治明"=>1,"洪文泰"=>1,"洪周金女"=>1,"翁文德"=>1,"高文良"=>1,"張朝權"=>1,"莊姬美"=>1,"陳志彬"=>1,"陳明文"=>1,"陳建年"=>1,"陳景星"=>1,"陳照郎"=>1,"黃木添"=>1,"黃鈴雄"=>1,"楊仁福"=>1,"董榮芳"=>1,"劉克"=>1,"王慶豐"=>1,"江上清"=>1,"周慧瑛"=>1,"林春德"=>1,"林進春"=>1,"邱茂男"=>1,"邱創良"=>1,"邱鏡淳"=>1,"金萬里"=>1,"馬榮吉"=>1,"張溫鷹"=>1,"張蔡美"=>1,"許素葉"=>1,"連錦水"=>1,"郭榮振"=>1,"陳振雄"=>1,"陳進祥"=>1,"陳榮盛"=>1,"彭添富"=>1,"曾華德"=>1,"曾蔡美佐"=>1,"游月霞"=>1,"游任和"=>1,"黃正義"=>1,"楊文欣"=>1,"楊瓊瓔"=>1,"劉文雄"=>1,"劉守成"=>1,"劉銓忠"=>1,"盧逸峰"=>1,"賴誠吉"=>1,"謝言信"=>1,"鍾德珍"=>1,"簡金卿"=>1,"蘇文雄"=>1,"王世勛"=>1,"余政道"=>1,"宋艾克"=>1,"周清玉"=>1,"周錫瑋"=>1,"林久翔"=>1,"林正二"=>1,"林南生"=>1,"林淵熙"=>1,"林錫耀"=>1,"侯惠仙"=>1,"徐慶元"=>1,"張明雄"=>1,"張清芳"=>1,"張福興"=>1,"張學舜"=>1,"曹啟鴻"=>1,"許登宮"=>1,"郭俊銘"=>1,"陳超明"=>1,"陳歐珀"=>1,"傅學鵬"=>1,"程惠卿"=>1,"黃永聰"=>1,"楊秋興"=>1,"楊泰順"=>1,"葉宜津"=>1,"趙良燕"=>1,"鄭金玲"=>1,"鄭國忠"=>1,"盧秀燕"=>1,"謝章捷"=>1,"鍾紹和"=>1,"顏清標"=>1,"羅明旭"=>1,"蘇治洋"=>1,"林頂立"=>1,"尤明哲"=>1,"王宋瓊英"=>1,"王開運"=>1,"王雲龍"=>1,"白金泉"=>1,"朱榮貴"=>1,"何傳"=>1,"呂世明"=>1,"李建和"=>1,"李茂炎"=>1,"周天啟"=>1,"林生財"=>1,"林湯盤"=>1,"林雲龍"=>1,"邱智生"=>1,"姜阿新"=>1,"浦陸佩玉"=>1,"張李德和"=>1,"張芳爕"=>1,"梁許春菊"=>1,"許金德"=>1,"郭秋煌"=>1,"陳萬"=>1,"陳水潭"=>1,"陳皆興"=>1,"陳修福"=>1,"陳海永"=>1,"陳逢源"=>1,"陳漢周"=>1,"游蘇鴦"=>1,"黃業"=>1,"黃堯"=>1,"黃成金"=>1,"黃宗焜"=>1,"黃運金"=>1,"劉金約"=>1,"劉啟光"=>1,"劉朝四"=>1,"潘福隆"=>1,"蔡鴻文"=>1,"蕭秀利"=>1,"蕭敦仁"=>1,"賴森林"=>1,"蘇東芳"=>1,"朱萬成"=>1,"江金彰"=>1,"何金生"=>1,"何禮棟"=>1,"吳三連"=>1,"李卿雲"=>1,"周百鍊"=>1,"林仁和"=>1,"林王少華"=>1,"林永樑"=>1,"林全義"=>1,"林金聲"=>1,"林端珍"=>1,"洪掛"=>1,"胡丙申"=>1,"徐灶生"=>1,"翁新臺"=>1,"高贏清"=>1,"張炎清"=>1,"許世賢"=>1,"郭石頭"=>1,"陳火土"=>1,"陳和錦"=>1,"陳振茂"=>1,"陳彩龍"=>1,"陳萬福"=>1,"黃祺祓"=>1,"黃廖素娥"=>1,"葛良拜"=>1,"盧繼竇"=>1,"謝東閔"=>1,"王天賜"=>1,"王安順"=>1,"王國秀"=>1,"王新順"=>1,"江文清"=>1,"何甘棠"=>1,"李丙心"=>1,"李良榮"=>1,"李雅正"=>1,"李源棧"=>1,"林全祿"=>1,"林尚英"=>1,"林茂盛"=>1,"林清景"=>1,"林蔡素女"=>1,"胡克柔"=>1,"高永清"=>1,"張彩鳳"=>1,"許振乾"=>1,"陳筆"=>1,"陳大拔"=>1,"陳天佑"=>1,"陳林雪霞"=>1,"陳俊宏"=>1,"陳茂榜"=>1,"程冠珊"=>1,"黃占岸"=>1,"黃宗寬"=>1,"楊紅綢"=>1,"葉炳煌"=>1,"葉寒青"=>1,"葉慶源"=>1,"劉盛財"=>1,"歐雲明"=>1,"蔡李鴦"=>1,"蔡錦棟"=>1,"蕭添財"=>1,"賴淵平"=>1,"賴榮木"=>1,"藍茂松"=>1,"蘇振輝"=>1);
 	  
 	  
 	  /*
@@ -1622,8 +1631,11 @@
 			
 			
 			// 取得關聯資料
+			$meta_refer = json_decode($metadata[$search_result['_id']]['refer_json'],true);
+			$meta_dobj = json_decode($metadata[$search_result['_id']]['dobj_json'],true);
+			
 			if($metadata[$search_result['_id']]['data_type'] == 'archive'){
-				$meta_refer = json_decode($metadata[$search_result['_id']]['refer_json'],true);
+				
 				if($meta_refer && count($meta_refer)){
 				  foreach($meta_refer as $rsysid => $rsyscontent){
 					$link_key = md5($rsysid.'œ'.microtime(true));
@@ -1639,25 +1651,32 @@
 			
 			}else if($metadata[$search_result['_id']]['data_type'] == 'biography'){
 			  
-			  $meta_refer = json_decode($metadata[$search_result['_id']]['source_json'],true); 	
+			  $meta_source = json_decode($metadata[$search_result['_id']]['source_json'],true); 	
 			  
 			  $Data_Result_Array[$i]['@Offer']['field']	= '當選屆次';	
-			  $Data_Result_Array[$i]['@Offer']['value']	= $meta_refer['mbr_offer'];	
+			  $Data_Result_Array[$i]['@Offer']['value']	= $meta_source['mbr_offer'];	
 			  $Data_Result_Array[$i]['@Offer']['match']	= false;
 			  
 			  $Data_Result_Array[$i]['@Source']['field']	= '資料來源';	
-			  $Data_Result_Array[$i]['@Source']['value']	= $meta_refer['_sourcefrom'];	
+			  $Data_Result_Array[$i]['@Source']['value']	= $meta_source['_sourcefrom'];	
 			  $Data_Result_Array[$i]['@Source']['match']	= false;
 			  
-			  $meta_dobj = json_decode($metadata[$search_result['_id']]['dobj_json'],true);
+			 
 			  
 			  $Data_Result_Array[$i]['@Portrait']['field']	= isset($meta_dobj['portrait']['name']) ? $meta_dobj['portrait']['name'] : '議員頭像';	
 			  $Data_Result_Array[$i]['@Portrait']['value']	= isset($meta_dobj['portrait']['source']) ? $meta_dobj['portrait']['source'] : 'theme/image/nopicture.png';	
 			  $Data_Result_Array[$i]['@Portrait']['match']	= false;
 			  
-			}else if($metadata[$search_result['_id']]['data_type'] == 'photo'){
 			  
-			  $meta_dobj = json_decode($metadata[$search_result['_id']]['dobj_json'],true); 	
+			  // 跳轉其他全宗
+			  if(isset($meta_refer['zonglink'])){
+				$Data_Result_Array[$i]['@Redirect']['field']	= $meta_refer['zonglink']['type'];	
+			    $Data_Result_Array[$i]['@Redirect']['attach']	= '總庫收錄'. $meta_refer['zonglink']['info'].' 共'.$meta_refer['zonglink']['count'].'張';	
+				$Data_Result_Array[$i]['@Redirect']['value']	= $meta_refer['zonglink']['link'];	
+				$Data_Result_Array[$i]['@Redirect']['match']	= false;  
+			  }
+			  
+			}else if($metadata[$search_result['_id']]['data_type'] == 'photo'){
 			  
 			  $Data_Result_Array[$i]['@Thumb']['field']	= '照片縮圖';	
 			  $Data_Result_Array[$i]['@Thumb']['value']	= $meta_dobj['dopath'].'thumb/'.$metadata[$search_result['_id']]['collection'].'/'.array_shift($meta_dobj['position']);	
@@ -2160,18 +2179,13 @@
 		  while($tmp = $DB_OBJ->fetch(PDO::FETCH_ASSOC)){
 		    $record = array();
 		    $meta = json_decode($tmp['search_json'],true);
-			
-			
-			
-		    $record['no']			= $counter;
-		    $record['in_store_no']  = $meta['in_store_no'];
-		    $record['name'] 		= $meta['name'];
-		    $record['series'] 	    = isset($meta['series']) ? $meta['series'] : $meta['zong_name'];
-		    $record['description']  = isset($meta['description']) ? $meta['description'] :'';
-		    $record['from_date'] 	= isset($meta['from_date']) ? $meta['from_date'] :'';
-		    $record['to_date']      = isset($meta['to_date']) ? $meta['to_date'] :'';
-		    $record['store_no'] 	= isset($meta['store_no']) ? $meta['store_no'] :'';
-		    $counter++;
+			$record['no']			= $counter;
+		    $record['zong']  	    = $meta['zong'];
+		    $record['identifier'] 	= $meta['identifier'];
+		    $record['serial'] 	    = isset($meta['serial']) ? $meta['serial'] : $meta['serial'];
+			$record['date_string']  = isset($meta['date_string']) ? $meta['date_string'] :'';
+		    $record['abstract'] 	= isset($meta['abstract_mask'])&&$meta['abstract_mask'] ? $meta['abstract_mask'] : $meta['abstract'];
+			$counter++;
 		    //$export_list[] = $record;
 			$export_list[] = array_map(function($field){ return html_entity_decode($field,ENT_COMPAT,'UTF-8'); },$record);
 			
@@ -2216,13 +2230,11 @@
 			$meta = $index_result['_source'];  
 			$record = array();
 		    $record['no']			= $counter;
-		    $record['in_store_no']  = $meta['in_store_no'];
-		    $record['name'] 		= $meta['name'];
-		    $record['series'] 	    = isset($meta['series']) ? $meta['series'] : $meta['zong_name'];
-		    $record['description']  = isset($meta['description']) ? $meta['description'] :'';
-		    $record['from_date'] 	= isset($meta['from_date']) ? $meta['from_date'] :'';
-		    $record['to_date']      = isset($meta['to_date']) ? $meta['to_date'] :'';
-		    $record['store_no'] 	= isset($meta['store_no']) ? $meta['store_no'] :'';
+		    $record['zong']  	    = $meta['zong'];
+		    $record['identifier'] 	= $meta['identifier'];
+		    $record['serial'] 	    = isset($meta['serial']) ? $meta['serial'] : '';
+			$record['date_string']  = isset($meta['date_string']) ? $meta['date_string'] :'';
+		    $record['abstract'] 	= isset($meta['abstract_mask'])&&$meta['abstract_mask'] ? $meta['abstract_mask'] : $meta['abstract'];
 		    $counter++;
 		    $export_list[] = $record; 
 		  }

@@ -4,7 +4,7 @@
     background-repeat: no-repeat;
     background-size: cover; 
   }
-    #page-wrap{min-height: 100%;}
+    #page-wrap{min-height: 100%; display:flex; flex-direction:column;}
 	#archive-content{
 	  width: 100%;
       padding-bottom: 75px;
@@ -17,8 +17,8 @@
 	  width: 100%;
 	  background:url('../image/footer_background.png');
 	}
-  
- 
+	
+	
 /* [ CLIENT HEADER DOM ] */ 
   .navbar{
 	background-color:rgba(0,0,0,0.4);   
@@ -34,9 +34,8 @@
     #navbar-header{
 	  margin:10px 0;
 	  height:50px;   
-      width:50%;
+      width:500px;
 	  color:#FFFFFF;
-	  
     } 
       #organ_mark{height:100%;cursor:pointer;}
 	  #system_mark{height:100%;}
@@ -49,7 +48,11 @@
 	  }
   
     #navbar-manual{
+	  padding:10px 0;
+	  flex:1;	
 	  color:#FFFFFF;
+	  display:flex;
+	  justify-content:center;
     }  
     #navbar-manual > li{
       display:inline-block;
@@ -77,15 +80,28 @@
 /* [ CLIENT FOOTER DOM ] */
   
   footer{
-	min-height:200px;
+	
     background-color:#474a4d;	
 	background-image:url('../image/footer_background.png')
   }
-			    
+    .richcontent{  /*多內容之頁腳，不用置底*/
+	  min-height:200px;
+	}	
+    
+    .appendbottom{ /*置底頁腳*/
+	  position: relative;
+	  margin-top: -100px;
+	  clear:both;
+	  height: 100px;
+	  width: 100%;
+	}	
+	
     .footer-block{
 	  display:flex;	
 	  padding:10px;
 	  color:#dcdcdc;
+	  align-items:center;
+	  justify-content:space-between;
 	}		  
 	
 	
@@ -136,10 +152,7 @@
 	}
 	
 	.copyright{
-	  display:flex;	
-	  line-height:1.5em;
-	  justify-content:space-between;
-	  align-items:center;
+	  line-height:1.3em;
 	  font-size:0.95em;
 	  font-weight:bold;
 	}
@@ -217,8 +230,12 @@
 	header.navbar > .container{ flex-direction:column;}
 	div#navbar-header{width:100%;text-align:center;}
 	aside.function_area{display:none;}	
+	
+	div.registration{ top:0; }
+	
 	ol.progress > li:nth-child(1){display:none;}
 	
+	div.information-block{ flex-direction:column;}
 	
   }	
   @media (min-width: 769px) AND (max-width: 991px){
@@ -230,7 +247,10 @@
 	header.navbar > .container{ flex-direction:column;}
 	div#navbar-header{width:100%;text-align:center;}
 	aside.function_area{display:none;}	
+	div.registration{ top:0; }
 	ol.progress > li:nth-child(1){display:none;}
+	
+	div.information-block{ flex-direction:column;}
   }
   
   @media (min-width: 992px) AND (max-width: 1199px){

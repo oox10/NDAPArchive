@@ -241,7 +241,7 @@
 	
 	//-- Get Export Meta List  // 使用者匯出
 	public static function GET_USER_EXPORT_META($metalist){
-	  $SQL_String = "SELECT search_json FROM metadata WHERE applyindex IN('".join("','",$metalist)."') AND _open=1 AND _keep=1 LIMIT 0,100;";
+	  $SQL_String = "SELECT search_json FROM metadata WHERE system_id IN('".join("','",$metalist)."') AND _open=1 AND _keep=1 LIMIT 0,100;";
 	  return $SQL_String;
 	}
 	

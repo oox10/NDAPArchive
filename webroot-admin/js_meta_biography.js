@@ -225,6 +225,7 @@
 			  
 			  
 			  dom_record.addClass('_target');
+			  
 			  var data_load =  response.data.meta.source;
 			  data_orl = data_load;
 			  
@@ -234,47 +235,16 @@
 			  
 			  location.hash = data_no;
 			  $('#system_breadcrumbs').find('li#target_record').remove().end().append("<li class='breadcrumb' id='target_record' >"+data_load['META-mbr_name']+" (編輯中) </li>");
-			  //active_header_footprint_option('record_selecter',dataObj.identifier,'_return_list');
-			  
-			  
 			  
 			  // 處理數位檔案
 			  var meta_dobjconfig = response.data.meta.dobj;
 			  
-			  
-			  // 標示遮蔽影像
-			  if(typeof meta_dobjconfig.domask != 'undefined' ){
-				
-				dobjectconf  = meta_dobjconfig.domask;
-			    $.each(dobjectconf,function(PageName,PageConf){
-				  if( (PageConf['mode'] && PageConf['mode']=='disabled') || (  typeof PageConf['display']!='undefined' && !parseInt(PageConf['display'])) ){
-					var pagerdom = $("option.pager[value='"+PageName+"']");
-					var pagerstring = pagerdom.text();  
-					pagerdom.attr('display',0);
-					pagerdom.text(pagerstring+'-ｘ');
-				  }  
-				});
+			  if(meta_dobjconfig.portrait){
+				if($('#DOBJ-portrait').length){
+				  $('<img/>').attr('src',meta_dobjconfig.portrait.source).appendTo($('#DOBJ-portrait'));	
+				}  
 			  }
 			  
-			  
-			  // 設定預設首頁
-			  if(typeof meta_dobjconfig.position != 'undefined'){
-				$.each(meta_dobjconfig.position,function(SerialNum,FileName){
-				  $('.page_selecter').val(FileName).trigger('change');
-				  return false				  
-				});  
-			    
-				var page_config    = Object.keys(meta_dobjconfig.position);
-			    var first_page_key = page_config[0];
-			    var last_page_key  = page_config[(page_config.length-1)];
-			  
-			    if(!$('#META-DobjFrom').val())  $('#META-DobjFrom').val(meta_dobjconfig.position[first_page_key]).addClass('_modify');
-				if(!$('#META-DobjEnd').val())  $('#META-DobjEnd').val(meta_dobjconfig.position[last_page_key]).addClass('_modify');
-			    
-			  }else{
-				var first_page = $('option.pager').first().val()
-				$('.page_selecter').val(first_page).trigger('change');
-			  }
 			  
 		    }else{
 			  system_message_alert('',response.info);
@@ -509,7 +479,7 @@
 	    return false;  
 	  }
 	  
-	   // active ajax
+	  // active ajax
       $.ajax({
         url: 'index.php',
 	    type:'POST',
@@ -555,46 +525,60 @@
 		  system_message_alert('','查無資料');
 	    }  
 	  }	
-		
 	} 
 	
 	
+	//-- upload photo file
+	$('#act_portrait_upload').change(function(){
+	  
+	  // get id
+	  var data_no    = $('._target').attr('no');
+	  var dom_record = $(this);
+	   
+	  if( ! data_no ){
+	    system_message_alert('',"資料錯誤");
+		return false;
+	  }
+	  
+	  // check file 
+	  var file_upload = $(this).val();
+	  var file_name   = file_upload.split('\\').pop();
+	  
+	  if(!file_upload){
+		return false;		
+	  }
+	  
+	  if( /\.(png|jpg)$/gi.test(file_name)===false ){
+		system_message_alert('','圖檔格式錯誤，請使用jpg或png');  
+		$(this).val('');
+	    return false;	
+	  }
+	  
+	  if(!confirm("確定要更新議員頭像?")){
+		return false	
+	  }  
+	  
+	  var action = $('#pho_upload_form').attr('action');
+	  $('#pho_upload_form').attr('action',action+data_no);
+	  var FormObj = document.getElementById('pho_upload_form'); 
+	  FormObj.submit()
+	  $('#pho_upload_form').attr('action',action);
+	  $(this).val('');
+	  
+	});
 	
 	
   }); /*** end of html load ***/
-      
-    
-	
-	//-- image load 輔助函數-1
-	$.createCache = function( requestFunction ) {
-		var cache = {};
-		return function( key, callback ) {
-			if ( !cache[ key ] ) {
-				cache[ key ] = $.Deferred(function( defer ) {
-					requestFunction( defer, key );
-				}).promise();
-			}
-			return cache[ key ].done( callback );
-		};
-	};
-	  
-	//-- image load 輔助函數  -2
-    $.loadImage = $.createCache(function( defer, url ) {
-		var image = new Image();
-		function cleanUp() {
-			image.onload = image.onerror = null;
-		}
-		defer.then( cleanUp, cleanUp );
-		image.onload = function() {
-			defer.resolve( url );
-		};
-		image.onerror = defer.reject;
-		image.src = url;
-    });
-	
-	
-	
-	   
+  
+  //-- 重新讀取照片	   
+  function reloadportrait(Base64String){
+   if(Base64String){
+	  if($('#DOBJ-portrait').length){
+		$('#DOBJ-portrait').empty();  
+		$('<img/>').attr('src',Base64String).appendTo($('#DOBJ-portrait'));	
+	  }  
+	}  
+  }	   
 	
 	
 	

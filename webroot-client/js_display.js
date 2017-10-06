@@ -27,87 +27,77 @@ $(window).on('load',function () {
 	});
   }
 
+  var dobj_mouse_wheel_scale_function_flag = false;
+  var dobj_mouse_move_scale_function_flag  = false;  // 滑鼠控制倍率
   
-  if($('#opt_size_slider').length > 0){
+  if($('#obj_size_slider').length > 0){
    
     var ImgBoxPosT,ImgBoxPosL,ImgBoxW,ImgBoxH; 
    
-    $( "#opt_size_slider" ).slider({
-		value:100,
-		min: 100,
-		max: 300,
-		step: 10,
-		create: function(event, ui) {
-		   ImgBoxPosT = $( ".obj_view" ).offset().top;
-           ImgBoxPosL = $( ".obj_view" ).offset().left;
-	       ImgBoxW    = $( ".obj_view" ).width();
-	       ImgBoxH    = $( ".obj_view" ).height();
-		},
-		slide: function( event, ui ) {
-		  $( ".ImageObject" ).width(  parseInt(ImgOrlW * ui.value /100)).height( parseInt(ImgOrlH * ui.value /100));
-		  if((ui.value/100).toString().length == 1){
-			$( ".opt_size_info" ).html( "x" + ui.value/100 +".0" );
-		  }else{
-			$( ".opt_size_info" ).html( "x" + ui.value/100 );
-		  }
-		  
-		  //修正如果圖片 跑出影像框  則定位於 框左上角
-	      var ImgPosNowT = $( ".ImageObject" ).offset().top;
-	      var ImgPosNowL = $( ".ImageObject" ).offset().left;
-          var ImgNewW    = $( ".ImageObject" ).width()  
-		  var ImgNewH    = $( ".ImageObject" ).height()
-		  if( (ImgBoxPosT-ImgPosNowT)>ImgNewH  ||  (ImgBoxPosL-ImgPosNowL)>ImgNewW || ui.value==100){
-		    $( ".ImageObject" ).offset( {top:ImgBoxPosT,left:ImgBoxPosL} ); 
-	      } 
-		},
-		stop: function( event, ui ) {
-		  //傳遞圖片大小　用來固定比率
-		  //alert($(".ImageObject" ).offset().top+':'+$(".ImageObject" ).offset().left);  
-		   
-		  //$(".system_footer_area").text("BOX:"+ImgBoxPosT+":"+ImgBoxPosL+",IMG:"+ImgPosNowT+":"+ImgPosNowL);  
-		}
-		
+    ImgBoxPosT = $( ".obj_view" ).offset().top;
+    ImgBoxPosL = $( ".obj_view" ).offset().left;
+    ImgBoxW    = $( ".obj_view" ).width();
+    ImgBoxH    = $( ".obj_view" ).height();
+    
+    $( "#obj_size_slider" ).mousemove(function(){
+      if(!dobj_mouse_move_scale_function_flag){
+		return false;  
+	  }
+	  if( $(this).val() > dobj_mouse_move_scale_function_flag ){
+		dobj_mouse_move_scale_function_flag = $(this).val();
+		resizedobj(1);  
+	  }else if($(this).val() < dobj_mouse_move_scale_function_flag){
+		dobj_mouse_move_scale_function_flag = $(this).val();
+		resizedobj(-1);  
+	  }
+	});
+	
+	// 綁定起始倍率
+	$("#obj_size_slider").on('mousedown',function(){
+		dobj_mouse_move_scale_function_flag = $(this).val();
+	});
+	
+	// 綁定取消倍率
+	$(".page_scale").on('mouseup',function(){
+		dobj_mouse_move_scale_function_flag = false;
 	});
   }
+ 
   
   
   $('#image_display').mousewheel(function(event, delta){
-	  /*
-	   distend - :往下捲  右移
- 	   distend + :往上捲  左移
-	  */
-	  
-	    var distend = (delta<0) ? 'dw' :'up';
-		
-		
-		var ImgRate = $('#opt_size_slider').slider("option","value");
-		
-		ImgRate = (delta<0) ? ImgRate-10 : ImgRate+10;
-		if(ImgRate>=300) ImgRate = 300;
-		if(ImgRate<=100) ImgRate = 100;
-		
-		$( "#ImageObject" ).css({'width':parseInt(ImgOrlW * ImgRate / 100)+'px','height':parseInt(ImgOrlH * ImgRate / 100)+'px'});
-		
-		$('#opt_size_slider').slider({value:ImgRate});
-		
-		if((ImgRate/100).toString().length == 1){
-		  $( ".opt_size_info" ).html( "x" + ImgRate/100 +".0" );
-		}else{
-		  $( ".opt_size_info" ).html( "x" + ImgRate/100 );
-		}
-		
-		//修正如果圖片 跑出影像框  則定位於 框左上角
-	    var ImgPosNowT = $( "#ImageObject" ).offset().top;
-	    var ImgPosNowL = $( "#ImageObject" ).offset().left;
-        var ImgNewW    = $( "#ImageObject" ).width()  
-		var ImgNewH    = $( "#ImageObject" ).height()
-		
-		
-		if( (ImgBoxPosT-ImgPosNowT)>ImgNewH  ||  (ImgBoxPosL-ImgPosNowL)>ImgNewW || ImgRate==100){
-		  $( "#ImageObject" ).offset( {top:ImgBoxPosT,left:ImgBoxPosL+ImgNewW/2} ); 
-	    } 
-	  
-   }); 
+	resizedobj(delta);
+  }); 
+  
+  function resizedobj(delta){
+	var ImgRate = parseInt($('#obj_size_slider').val());
+	
+	ImgRate = (delta<0) ? ImgRate-10 : ImgRate+10;
+	if(ImgRate>=300) ImgRate = 300;
+	if(ImgRate<=70) ImgRate = 70;
+	
+	$( "#ImageObject" ).css({'width':parseInt(ImgOrlW * ImgRate / 100)+'px','height':parseInt(ImgOrlH * ImgRate / 100)+'px'});
+	
+	$('#obj_size_slider').val(ImgRate);
+	
+	if((ImgRate/100).toString().length == 1){
+	  $( "#scale_info" ).html( ImgRate/100 +".0" );
+	}else{
+	  $( "#scale_info" ).html( ImgRate/100 );
+	}  
+	
+	//修正如果圖片 跑出影像框  則定位於 框左上角
+	var ImgPosNowT = $( "#ImageObject" ).offset().top;
+	var ImgPosNowL = $( "#ImageObject" ).offset().left;
+	var ImgNewW    = $( "#ImageObject" ).width()  
+	var ImgNewH    = $( "#ImageObject" ).height()
+	
+	$( "#ImageObject" ).offset( {top:ImgBoxPosT,left:ImgBoxPosL+parseInt((ImgBoxW-ImgNewW)/2)} ); 
+	
+	
+  }
+  
+  
   
   // reference select
   if($('input#reference_string').length >0 ){
@@ -207,11 +197,9 @@ $(window).on('load',function () {
 					  ImgOrlW = this.width;
 					  ImgOrlH = this.height;
 					  
-					  
 					  if($(".ImageObject" ).height() > $(".ImageObject" ).width()){
 						$(".ImageObject" ).css({'width':'','height':BlockH+'px'});
 					  }else{
-						
 						var default_rate = 1;
 						var diff = 0;
 						
@@ -220,16 +208,18 @@ $(window).on('load',function () {
 						  diff++;
 						}while(tmp_h > BlockH);
 						$(".ImageObject" ).css({'width':parseInt(BlockW*(default_rate-(0.01*diff)))+'px','height':''});
-					    
+						
+					  }
+					  ImgOrlW = $(".ImageObject" ).width();
+					  ImgOrlH = $(".ImageObject" ).height();
+						
+					  if($("#obj_size_slider").val()>100){
+						$("#ImageObject" ).width(  parseInt(ImgOrlW * $("#obj_size_slider").val() /100)).height( parseInt(ImgOrlH * $("#obj_size_slider").val() /100)); 
 					  }
 					  
-					  if($("#opt_size_slider").slider('value')>100){
-					    $(".ImageObject" ).width(  parseInt(ImgOrlW * $("#opt_size_slider").slider('value') /100)).height( parseInt(ImgOrlH * $("#opt_size_slider").slider('value') /100)); 
-					  }
-					  
-					  //$(".ImageObject" ).show();
+					  var orl_left_pos = $( ".obj_view" ).offset().left+parseInt(($( ".obj_view" ).width()-$(".ImageObject" ).width())/2);
+					  $("#ImageObject" ).offset( {top:0,left: orl_left_pos} );  
 					  $(".ImageObject" ).animate({opacity:'1'},300,function(){});
-					  
 					  
 					  $('#btinfo_pageload').stop(true, true).css({opacity:0});
 					  
@@ -332,7 +322,8 @@ $(window).on('load',function () {
 				
 				if(object_built.media.length){
 				  $.each(object_built.media,function(order,dobj){
-					video.append("<source type='video/mp4' src='index.php?act=Display/loadmp4/"+dobj.code+"#t="+dobj.stime+","+dobj.etime+"' id='v-"+dobj.code+"' />");  
+					//video.append("<source type='video/mp4' src='http://localhost:8080/NDAPArchive/webroot-video/video.php?src="+dobj.file+"#t="+dobj.stime+","+dobj.etime+"' id='v-"+dobj.code+"' />");  
+				    video.append("<source type='video/mp4' src='http://localhost:8080/NDAPArchive/webroot-client/index.php?act=Display/loadmp4/"+dobj.code+"#t="+dobj.stime+","+dobj.etime+"' id='v-"+dobj.code+"' />");  
 				    var thumb = $("<div/>").addClass('media_phase').attr('data-code','v-'+dobj.code);
 				    thumb.append("<img src='screen.php?src="+dobj.thumb+"'  />")
 				    thumb.append('<h2> <i class="fa fa-video-camera" aria-hidden="true"></i>'+dobj.file+"</h2>")

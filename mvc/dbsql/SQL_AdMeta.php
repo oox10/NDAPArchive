@@ -36,14 +36,30 @@
 	}  
 	
 	
-	
-	
-	
 	//-- Admin Built : get collection detail arrange meta
 	public static function GET_TARGET_COLLECTION_META(){
 	  $SQL_String = "SELECT * FROM metadata WHERE zong=:zong AND collection=:collection_id AND _keep=1 ORDER BY system_id ASC;";
 	  return $SQL_String;
 	}
+	
+	//-- Admin Built : get user projects 
+	public static function GET_USER_PROJECTS(){
+	  $SQL_String = "SELECT * FROM system_project WHERE _user=:userno AND _keep=1 ORDER BY spno ASC;";
+	  return $SQL_String;
+	}
+	
+	//-- Admin Built : get target project
+	public static function GET_TARGET_PROJECT(){
+	  $SQL_String = "SELECT * FROM system_project WHERE _user=:userno AND _keep=1 AND spno=:spno;";
+	  return $SQL_String;
+	}
+	
+	//-- Admin Built : get target project
+	public static function UPDATE_TARGET_PROJECT(){
+	  $SQL_String = "UPDATE system_project SET regist_task=CONCAT(regist_task,';',:regtask),pjelements=:pjelements,_status='_import' WHERE _user=:userno AND spno=:spno;";
+	  return $SQL_String;
+	}
+	
 	
 	//-- Admin Built : get source meta
 	public static function GET_SOURCE_META($Zong){
@@ -158,8 +174,8 @@
 	
 	
 	//-- Admin Meta :  logs meta modify   
-	public static function ADMIN_META_GET_LOGS_META_MODIFY(){
-	  $SQL_String = "INSERT INTO logs_modify VALUES (NULL,NULL,:user,:sid,:orl,:new,:result);";
+	public static function LOGS_META_MODIFY(){
+	  $SQL_String = "INSERT INTO logs_metaedit VALUES (NULL,NULL,:zong,:sysid,:identifier,:source,:update,:user,:result);";
 	  return $SQL_String;
 	}  
 	
@@ -179,43 +195,86 @@
 	
 	/***--  使用者上傳 SQL SET  --***/
 	
-	
-	//-- get uploaded file list 
-	public static function SELECT_UPLOAD_OBJECT_LIST(){
-	  $SQL_String = "SELECT * FROM task_upload WHERE user=:user AND folder=:folder AND flag=:flag AND _upload!='' AND _process='';";
-	  return $SQL_String;
-	}
-	
-	//-- finish folder upload state 
-	public static function FINISH_USER_UPLOAD_TASK(){
-	  $SQL_String = "UPDATE user_folder SET uploadtime='',_uploading=0 WHERE owner=:uno AND ufno=:ufno;";
-	  return $SQL_String;
-	}
-	
-	
 	//- check upload file exist
+	//  _upload : 完成上傳
+	//  _archived : 完成導入
 	public static function CHECK_FILE_UPLOAD_LIST(){
-	  $SQL_String = "SELECT folder,_regist FROM task_upload WHERE hash=:hash AND _upload!='';";
+	  $SQL_String = "SELECT folder,_regist FROM system_upload WHERE hash=:hash AND _upload!='' AND _archived!='';";
 	  return $SQL_String;
 	}
 	
 	//- regist upload file 
 	public static function REGIST_FILE_UPLOAD_RECORD(){
-	  $SQL_String = "INSERT INTO task_upload VALUES(NULL,:utkid,:folder,:flag,:user,:hash,:creater,:store,:name,:size,:mime,:type,:last,'".date('Y-m-d H:i:s')."','','','','');";
+	  $SQL_String = "INSERT INTO system_upload VALUES(NULL,:utkid,:folder,:flag,:user,:hash,:store,:saveto,:name,:size,:mime,:type,:last,'".date('Y-m-d H:i:s')."','','','','[]',1);";
 	  return $SQL_String;
 	}
 	
 	//- update upload state  
 	public static function UPDATE_FILE_UPLOAD_UPLOADED(){
-	  $SQL_String = "UPDATE task_upload SET _upload='".date('Y-m-d H:i:s')."' WHERE urno=:urno;";
+	  $SQL_String = "UPDATE system_upload SET _upload='".date('Y-m-d H:i:s')."' WHERE urno=:urno;";
 	  return $SQL_String;
 	}
 	
-	//- update upload process  
-	public static function UPDATE_FILE_UPLOAD_PROCESSED(){
-	  $SQL_String = "UPDATE task_upload SET _process='".date('Y-m-d H:i:s')."',_archived=:archive,_logs=:logs WHERE urno=:urno;";
+	
+	//- process upload : get upload file  
+	public static function SELECT_TARGET_UPLOAD_FILE(){
+	  $SQL_String = "SELECT * FROM system_upload WHERE urno=:urno AND _keep=1;";
 	  return $SQL_String;
 	}
+	
+	//- process upload : delete upload file   
+	public static function DELETE_TARGET_UPLOAD_FILE(){
+	  $SQL_String = "UPDATE system_upload SET _keep=0 ,_process=:process , _logs=:logs WHERE urno=:urno;";
+	  return $SQL_String;
+	}
+	
+	
+	//-- regist system task 
+	public static function REGIST_SYSTEM_TASK(){
+	  $SQL_String = "INSERT INTO system_tasks VALUES (NULL,:user,:task_name,:task_type,:task_num,:task_done,:time_initial,'0000-00-00 00:00:00','','',1);";
+	  return $SQL_String;
+	}
+	
+	//-- bind photo process task 
+	public static function BIND_UPLOAD_TO_TASK(){
+	  $SQL_String = "UPDATE system_upload SET utkid=:utkid,_logs=:logs WHERE urno=:urno;";
+	  return $SQL_String;
+	}
+	
+	
+	
+	//- update upload process  
+	public static function UPDATE_FILE_UPLOAD_PROCESSED(){
+	  $SQL_String = "UPDATE system_upload SET _process='".date('Y-m-d H:i:s')."',_archived=:archive,_logs=:logs WHERE urno=:urno;";
+	  return $SQL_String;
+	}
+	
+	//-- get uploaded file list 
+	public static function SELECT_UPLOAD_OBJECT_LIST(){
+	  $SQL_String = "SELECT * FROM system_upload WHERE user=:user AND folder=:folder AND flag=:flag AND _upload!='' AND _process='';";
+	  return $SQL_String;
+	}
+	
+	//-- finish folder upload state 
+	public static function FINISH_USER_UPLOAD_TASK(){
+	  $SQL_String = "UPDATE system_upload SET uploadtime='',_uploading=0 WHERE owner=:uno AND ufno=:ufno;";
+	  return $SQL_String;
+	}
+	
+	//-- Admin Meta :  get dobj download resouce   
+	public static function DOBJ_DOWNLOAD_RESOUCE(){
+	  $SQL_String = "SELECT * FROM logs_digitalobject WHERE action=:action AND note=:hash AND _user=:user;";
+	  return $SQL_String;
+	}  
+	
+	//-- Admin Meta :  logs do modify   
+	public static function LOGS_DOBJ_MODIFY(){
+	  $SQL_String = "INSERT INTO logs_digitalobject VALUES (NULL,NULL,:file,:action,:store,:note,:user);";
+	  return $SQL_String;
+	}  
+	
+	
+	
 	
 	
 	
