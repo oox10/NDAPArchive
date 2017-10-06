@@ -3,5 +3,6 @@ conf/system_config.php
 mvc/lib/*
 userProfile/*
 *.log
+*.logs
 *.tmp
 systemPaser/*
