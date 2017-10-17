@@ -1078,11 +1078,8 @@
 		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
 		}
 		
-		
 		// 設定檔名規則
 		// 掃描資料並刪除
-		
-		
 		if(!preg_match('/^(\d+)(.*?)/',$FileStartNum,$match)){
 		  throw new Exception('_META_DOBJ_RENAME_STARTNUM_PATTERN_FAILE');	 	
 		}
@@ -1090,6 +1087,24 @@
 		$new_filenum_start  = intval($match[1]);
 		$new_filenum_length = strlen($match[1]);
 		$new_filenum_footer = isset($match[2]) ? $match[2] : '';
+		
+		
+		// 檢測重排模式為往前或往後
+		$rename_mode = '-';
+		$first_element_num = intval(str_replace($new_fileheader,'',$dobj_name_array[0]));
+		if($new_filenum_start <= $first_element_num){  
+          //前排模式 		
+		  $dobj_rename_array     = $dobj_name_array;
+		  $rename_filenum_start  = $new_filenum_start;	
+		  $rename_mode = '+';
+		}else{
+		  //後排模式	
+		  $dobj_rename_array     = array_reverse($dobj_name_array);
+		  $rename_filenum_start  = $new_filenum_start + count($dobj_name_array) -1 ;	
+		  $rename_mode = '-';
+		}
+		
+		
 		
 		$rename_counter = 0;
 		
@@ -1101,11 +1116,16 @@
 		
 		
 		// 執行重新命名
-		foreach($dobj_name_array as $target_do_file){
+		foreach($dobj_rename_array as $target_do_file){
           
 		  list($orl_filename,$orl_file_extension) = explode('.',$target_do_file);
-          $new_filename = $new_fileheader.str_pad($new_filenum_start+$rename_counter,$new_filenum_length,'0',STR_PAD_LEFT).$new_filenum_footer.'.'.$orl_file_extension;		  
           
+		  if($rename_mode=='-'){  //依據模式命名檔案
+			$new_filename = $new_fileheader.str_pad($rename_filenum_start-$rename_counter,$new_filenum_length,'0',STR_PAD_LEFT).$new_filenum_footer.'.'.$orl_file_extension;		    
+		  }else{
+			$new_filename = $new_fileheader.str_pad($rename_filenum_start+$rename_counter,$new_filenum_length,'0',STR_PAD_LEFT).$new_filenum_footer.'.'.$orl_file_extension;  
+		  }
+		  
 		  $rename_counter++; 
 		   
 		  // 掃描原始資料設定
@@ -1386,6 +1406,51 @@
       }
 	  return $result;  
 	}
+	
+	//-- Admin Meta : Batch Delete DOBJ And ReSave profile
+	// [input] : DataType    : ARCHIVE....
+	// [input] : DataFolder  : collection id // file folder 
+	public function ADMeta_Dobj_Buffer_Update( $DataType='' , $DataFolder='' ){
+		
+	  $result_key = parent::Initial_Result('buffer');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查DO資料設定
+	    $profile_path = _SYSTEM_DIGITAL_FILE_PATH.$DataType.'/profile/'.$DataFolder.'.conf';
+		if(!file_exists($profile_path)){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');	
+		}
+		
+		// 讀取DO設定
+		$dobj_config = file_get_contents($profile_path);
+		$dobj_profile = json_decode($dobj_config,true);
+		if( !$dobj_profile || ( !isset($dobj_profile['items']) || !is_array($dobj_profile['items']))){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');		
+		}
+		
+		// 更新imageBuffer
+		$system_buffer_patch    = _SYSTEM_DIGITAL_LIST_BUFFER.$DataFolder.'_list.tmp';
+		$system_buffer_contents = [$dobj_profile['store']];
+		foreach($dobj_profile['items'] as $item){
+	      $system_buffer_contents[] = $item['file'];		
+		}
+		
+		file_put_contents($system_buffer_patch,join("\n", $system_buffer_contents));
+		
+		// final 
+		$result['action'] = true;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+		
+	
+	
 	
 	//-- Admin Meta : DOBJ File Download Prepare
 	// [input] : DataType    : ARCHIVE....

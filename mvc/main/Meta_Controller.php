@@ -143,16 +143,17 @@
 	  self::data_output('json','',$this->Model->ModelResult); 
 	}
 	
-	
 	// AJAX: 重新命名勾選數位檔
 	public function dorename($DataType,$Folder,$FilePreName,$FileStartNum,$DataJson){  
 	  $action = $this->Model->ADMeta_Dobj_Batch_Rename($DataType,$Folder,$FilePreName,$FileStartNum,$DataJson);
+	  if($action['action']) $this->Model->ADMeta_Dobj_Buffer_Update($DataType,$Folder);
 	  self::data_output('json','',$this->Model->ModelResult); 
 	}
 	
 	// AJAX: 重新排序數位檔
 	public function doreorder($DataType,$Folder,$DataJson){  
 	  $action = $this->Model->ADMeta_Dobj_Batch_Reorder($DataType,$Folder,$DataJson);
+	  if($action['action']) $this->Model->ADMeta_Dobj_Buffer_Update($DataType,$Folder);
 	  self::data_output('json','',$this->Model->ModelResult); 
 	}
 	
@@ -160,6 +161,7 @@
 	public function dodele($DataType,$Folder,$DataJson,$Recapture=''){  
 	  $verificationCode = isset($_SESSION['turing_string']) ? $_SESSION['turing_string'] : NULL;	
 	  $action = $this->Model->ADMeta_Dobj_Batch_Delete($DataType,$Folder,$DataJson,$Recapture,$verificationCode);
+	  if($action['action']) $this->Model->ADMeta_Dobj_Buffer_Update($DataType,$Folder);
 	  self::data_output('json','',$this->Model->ModelResult); 
 	}
 	
