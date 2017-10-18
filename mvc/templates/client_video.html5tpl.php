@@ -178,8 +178,7 @@
 			  <span class='fbd_title'>回報類型:</span>
 			  <input type='checkbox' class='feedback_type' name='fbd_type' value='資料問題' ><span >資料問題</span>，
 			  <input type='checkbox' class='feedback_type' name='fbd_type' value='系統問題' ><span >系統問題</span>，
-			  <input type='checkbox' class='feedback_type' name='fbd_type' value='使用問題' ><span >使用問題</span>，
-			  <input type='checkbox' class='feedback_type' name='fbd_type' value='建議回饋' ><span >建議回饋</span>，
+			  <input type='checkbox' class='feedback_type' name='fbd_type' value='內容隱私問題' ><span >內容隱私問題</span>，
 			  <input type='checkbox' class='feedback_type' name='fbd_type' value='其他' >其他:<input type='text' class='fbd_type_other' name='fbd_type_other' value='' >
 			</div>
 			<div class='fbd_title'>回報描述:</div>
