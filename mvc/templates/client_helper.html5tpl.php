@@ -37,6 +37,8 @@
 		padding:10px;  
 		height:800px;
 		min-height:800px;
+		margin-bottom:50px;
+		
 	  }	
 		h1{
 		  font-size:1.3em;	 
