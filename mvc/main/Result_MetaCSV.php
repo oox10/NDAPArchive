@@ -14,7 +14,7 @@
         
 		// 輸出資料 // 第一行為欄位
 		foreach($data_list as $meta_record){ 
-		  $csv_doc .='"'.join('","',$meta_record).'"'."\n";
+		  $csv_doc .='"'.join('",="',$meta_record).'"'."\n";
 		}
 	    return $csv_doc;
 	}  
