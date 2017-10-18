@@ -35,6 +35,7 @@
 	  }
 	  .site_helper_block{
 		padding:10px;  
+		height:800px;
 		min-height:800px;
 	  }	
 		h1{
