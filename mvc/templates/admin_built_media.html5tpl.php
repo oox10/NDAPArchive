@@ -444,9 +444,11 @@
 						<td class='tag_time' ><input type='text' class='pointer stime' value='' readonly  /> <a class='act_set_time option'><i class="fa fa-tag" aria-hidden="true"></i></a></td>
 						<td class='tag_time' ><input type='text' class='pointer etime' value='' readonly  /> <a class='act_set_time option'><i class="fa fa-tag" aria-hidden="true"></i></a></td>
 						<td class='tag_func' >
+						  <div class='tagfunc_wapper' >
 						  <button type='button' class='cancel segment_dele' disabled ><i class="fa fa-trash" aria-hidden="true"></i></button>
 						  <button type='button' class='active segment_edit'><i class="fa fa-pencil" aria-hidden="true"></i><i class="fa fa-floppy-o" aria-hidden="true"></i></button>
 						  <button type='button' class='active segment_play'><i class="fa fa-play" aria-hidden="true"></i><i class="fa fa-pause" aria-hidden="true"></i></button>
+						  </div>
 						</td>
 					  </tr>
 					</tbody>

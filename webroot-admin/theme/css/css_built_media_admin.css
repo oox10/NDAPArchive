@@ -558,6 +558,7 @@
         margin:0 10px ;
 		display:flex;
 	    flex-direction:column;
+		min-width:600px;
 		
 	  }
         div.media_display_block{
@@ -570,8 +571,10 @@
 		  div.media_platform{
 			flex:1;  
 			padding:5px;
+			display:flex;
+			flex-direction:column;
 		  }
-		  div.media_platform > video{ width:100%; background-color:#444444; min-height:400px; max-height:500px;}
+		  div.media_platform > video{ width:100%; background-color:#444444; flex:1; }
 		  div.media_platform > video::-webkit-media-controls-panel {
 			display: flex !important;
 			opacity: 1 !important;
@@ -580,15 +583,21 @@
 			div.mcontroler{
 			  background-color:rgba(0,0,0,0.3);  
 		      border-radius:3px;
-			  min-height:35px;
+			  flex:0 0 40px;
 			  display:flex;
 			  align-items:center;
 			  justify-content:space-between;
 			  padding:0 5px;
 			}
-		      #adfile-project{ 
-			    display:inline-flex; 
+		      .video_control{
+				flex:0 0 65px; 				
+			  }  
+			  
+			  #adfile-project{ 
+			    flex:1;
+			    display:flex; 
 			    align-items:center;
+				justify-content:flex-end;
 			  }
 			  #adfile-project *{ 
 			    padding:5px 0;
@@ -596,13 +605,14 @@
                 border:0px;				
 			  }
 			  #adfile-project > input{ width:80px; text-align:center;}
-			  #adfile-project > button{ width:60px; font-size:0.8em; color:#FFFFFF; }
-			  #adfile-project > select{ border-radius:3px 0 0 3px; border-right:1px #cdcdcd dotted; }
+			  #adfile-project > button{ flex:0 0 60px; font-size:0.8em; color:#FFFFFF; }
+			  #adfile-project > select{ flex:0 0 100px; border-radius:3px 0 0 3px; border-right:1px #cdcdcd dotted; }
 			  
 		  ul.media_queue_block{
 			width:150px;
             height:100%;			
 		    border-left:1px #CDCDCD solid;
+			overflow:auto;
 		  }
 		    li.mfile{ width:100%; padding:5px 5px 10px 5px; margin-bottom:5px; border-bottom:1px #CDCDCD solid; }
 	          div.mframe{ cursor:pointer;}
@@ -644,16 +654,18 @@
 			#meta_tag_template{display:none;}  
 			  
 			  .tag_num{width:30px;}
-			  .tag_thumb{ width:180px; }
-			  .tag_thumb > img{width:80px;}
-		      .tag_fname{   line-height:1.3em; padding:10px 5px;}
+			  .tag_thumb{ max-width:180px; width:180px; }
+			  .tag_thumb > img{width:45%; max-width:80px;}
+		      .tag_fname{   line-height:1.3em; padding:10px 5px; vertical-align:top;}
 			  
-			  .tag_time{width:100px; text-align:center; position:relative;}
+			  .tag_time{ width:100px; text-align:center; position:relative;}
 			  .tag_time > input{width:100%; text-align:center; border-radius:3px; height:40px;}
-			  .tag_func{width:150px; text-align:center;}
+			  .tag_func{ width:150px; text-align:center;}
+			    .tagfunc_wapper{height:100%;display:flex;}
 			
-			  .tag_func > button{width:40px; height:40px; }
-		      .tag_func > button#act_create_segment{height:25px;}  
+			
+			  .tagfunc_wapper > button{flex: 1 1 40px; height:40px; margin-right:3px;}
+		      .tagfunc_wapper > button#act_create_segment{height:25px;}  
 			   
 			    .segment_play > i.fa{display:none;}
 			.tag_record[play='0'] .segment_play > i.fa-play{display:inline-block;}
@@ -670,6 +682,13 @@
                    left:5px;				   
 				 }
 			.tag_record[edit='1'] .act_set_time{display:inline-block;}
+			
+			 @media screen and (max-width: 1200px) {
+				.tags_field td:nth-child(2){display:none;}
+				#meta_tag_template tr td:nth-child(2){display:none;}
+				#meta_tags_queue tr td:nth-child(2){display:none;}
+			  }
+			
 			
 	  /*===================*/
 	  /*   影像控制區塊   */

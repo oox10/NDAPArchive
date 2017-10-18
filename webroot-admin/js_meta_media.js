@@ -7,11 +7,17 @@
 	/* [ BUILT CONTENTS FUNCTION ] */
 	/***-------------------------***/
 	
-	//-- initial video tag
-	if( $('video').length){
-  	  var vwidth = $('video').width();
-	  $('video').css('height',parseInt(vwidth/4*3));
-	}
+	//-- overflow switch  // 版面覆蓋切換
+	$('#metadata_editer').click(function(){
+	  $('#metadata_editer').css('z-index',13);
+      $('.media_edit_continer').css('z-index',12); 
+	})
+	
+	$('.media_edit_continer').click(function(){
+	  $('#metadata_editer').css('z-index',12);
+      $('.media_edit_continer').css('z-index',13); 
+	})
+	
 	
 	
 	var historyinput  = {};  // 儲存上次的內容
