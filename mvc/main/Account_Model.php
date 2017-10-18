@@ -114,6 +114,19 @@
 		}
 		
 		
+		// 檢查帳戶群組
+		$check_in_back = false;
+		$DB_CGP= $this->DBLink->prepare(SQL_Account::CHECK_ACCOUNT_GROUP_TOBACK());
+		$DB_CGP->bindParam(':uid',$user_login['uno'],PDO::PARAM_INT);	
+		if(!$DB_CGP->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
+		}
+		
+		if(!$DB_CGP->fetchColumn()){
+		  throw new Exception('_SYSTEM_ERROR_PERMISSION_DENIAL');	
+		}
+		
+		
 		/*--------------------------------------------------------------------------*/
 		
 		// 成功登入 - 註冊登入序號
