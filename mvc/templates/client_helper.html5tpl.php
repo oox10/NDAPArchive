@@ -59,7 +59,7 @@
     </style>
   </head>
   <body>
-    <div id='page-wrap' class='system_body_area'> <!-- 整體區塊 -->
+    <div id='page-wrap' class='system_body_area' style='height:auto;'> <!-- 整體區塊 -->
 	  <div id='archive-content' > <!-- 上半身 -->
 		
 		<header class='navbar'>
