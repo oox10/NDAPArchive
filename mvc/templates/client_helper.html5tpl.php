@@ -72,8 +72,8 @@
 			  <li ><a href='index.php?act=Landing/index'>首頁</a></li>
 			  <li ><a href='index.php?act=Archive/index'>資料檢索</a></li>
 			  <li ><a href='index.php?act=Landing/account'>帳號註冊</a></li>
-			  <li ><a href='index.php?act=Landing/helper'>使用說明</a></li>
-			  <li atthis='1'>相關連結</li>
+			  <li atthis='1'> 使用說明 </li>
+			  <li ><a href='index.php?act=Landing/sitelink'>相關連結</a></li>
 			  <li ><i class="fa fa-exclamation-circle" aria-hidden="true"></i> <a id='user_feedback'>系統回報</a></li>
 			</ul>
 		  </div>
