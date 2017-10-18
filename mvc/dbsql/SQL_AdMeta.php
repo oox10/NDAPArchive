@@ -107,6 +107,20 @@
 	
 	
 	
+	//-- Admin Meta : Metadata edit logs 
+	public static function GET_TARGET_META_LOGS( ){
+	  $SQL_String = "SELECT * FROM logs_metaedit WHERE systemid=:sid ORDER BY mmno DESC;";
+	  return $SQL_String;
+	}
+	
+	
+	
+	//-- Admin Meta : Delete Metadata 
+	public static function DELETE_TARGET_METADATA( ){
+	  $SQL_String = "DELETE FROM metadata WHERE system_id=:sid AND _keep=1;";
+	  return $SQL_String;
+	}
+	
 	
 	
 	//-- Admin Built :  set target task handler   

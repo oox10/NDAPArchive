@@ -471,9 +471,9 @@
 	//-- iterm function execute
 	$('#delete_current_meta').click(function(){
 	  
-	   // get value
-	  var task_no    = $('#taskid').data('refer');
-	  var data_no    = $('._target').attr('no');
+	  // get value
+	  var data_dom   = $('._target');
+	  var data_no    = data_dom.attr('no');
 	  var dom_record = $(this);
 	  
 	  if( ! data_no ){
@@ -491,13 +491,13 @@
         url: 'index.php',
 	    type:'POST',
 	    dataType:'json',
-	    data: {act:'Built/deleitem/'+task_no+'/'+data_no},
+	    data: {act:'Meta/deleitem/'+data_no},
 		beforeSend: function(){  system_loading(); },
         error: 		function(xhr, ajaxOptions, thrownError) {  console.log( ajaxOptions+" / "+thrownError);},
 	    success: 	function(response) {
 		  if(response.action){
-			if($("tr._target").length){
-			  $("tr._target").remove();		  
+			if(data_dom.length){
+			  data_dom.remove();		  
 			}
 			location.hash = '';
 			$('#edit_close').trigger('click');

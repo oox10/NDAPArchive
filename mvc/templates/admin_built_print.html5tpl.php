@@ -452,7 +452,8 @@
 				  <div class='edit_information'>
 					<div class='edit_conf' >
 					  <div class='advance_conf' >
-						<a class='option' title='刪除資料' id='delete_current_meta' ><i class="fa fa-trash-o" aria-hidden="true"></i>  刪除資料 </a>
+					    <div><a class='option' title='調閱歷史' id='act_get_edit_logs' ><i class="fa fa-history" aria-hidden="true"></i>  調閱歷史 </a></div>
+						<div><a class='option' title='刪除資料' id='delete_current_meta' ><i class="fa fa-trash-o" aria-hidden="true"></i>  刪除資料 </a></div>
 						<a class='option' title='關閉設定' id='act_close_setting' ><i class="fa fa-times" aria-hidden="true"></i></a>
 					  </div>
 					  <a class='option' title='進階設定' id='act_editor_setting' ><i class="fa fa-cog" aria-hidden="true"></i></a>
@@ -696,6 +697,41 @@
 	
 	
 	<!-- 框架外結構  -->
+	
+	
+	<!-- 顯示歷史 -->
+	<div class='system_popout_area' id='meta_edit_logs' >
+	    <div class='container'>
+		  <div class='module_block' >
+		    <h1>
+			  <div class='md_header'>
+			    <span class='md_title'>編輯紀錄</span> 
+			  </div>
+			  <span class='area_close option' title='關閉'><i class="fa fa-times-circle" aria-hidden="true"></i></span>
+			</h1>
+			<div class='md_contents'>
+			  <table class='meta_edited_history'>
+			    <tr class='logs_field'><td>日期</td><td>帳號</td><td>修改內容</td></tr>
+			    <tbody id='meta_edit_record_block'>
+			    </tbody>
+			  </table>
+			</div>
+			<div class='md_footer'>
+			  <div>
+			    <span class='md_time'>  </span>
+				From
+				<span class='md_from'>  </span>
+			  </div>
+			  <div>
+			    <span class='md_counter'>  </span>
+			  </div>
+			</div>
+		  </div>
+        </div>
+	</div>
+	
+	
+	
 	<div class='system_message_area'>
 	  <div class='message_block'>
 		<div id='message_container'>

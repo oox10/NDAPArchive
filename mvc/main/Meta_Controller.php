@@ -125,6 +125,21 @@
 	  self::data_output('json','',$this->Model->ModelResult); 
 	}
 	
+	// AJAX: 刪除資料 
+	public function deleitem($DataNo){
+	  $action = $this->Model->ADMeta_Dele_Item_Data($DataNo);
+	  if($action['action']){
+		$this->Model->ADMeta_Process_Meta_Update($action['data']);  // 更新系統meta
+	  }
+	  self::data_output('json','',$this->Model->ModelResult); 
+	}
+	
+	// AJAX: 讀取歷史 
+	public function history($DataNo){
+	  $this->Model->ADMeta_Read_Item_Logs($DataNo);
+	  self::data_output('json','',$this->Model->ModelResult); 
+	}
+	
 	
 	// AJAX: 儲存多媒體分件
 	public function media($DataNo,$DataJson){  
@@ -200,11 +215,7 @@
 	  self::data_output('json','',$this->Model->ModelResult); 
 	}
 	
-	// AJAX: 刪除資料 
-	public function deleitem($TaskNo,$DataNo){
-	  $this->Model->ADBuilt_Dele_Item_Data($TaskNo,$DataNo);
-	  self::data_output('json','',$this->Model->ModelResult); 
-	}
+	
 	
 	// AJAX: 完成任務 
 	public function finish($TaskNo){

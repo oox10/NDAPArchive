@@ -11,6 +11,13 @@
 	var dobjectconf   = {};  // 數位檔案設定
 	
 	
+	
+	//-- module area close
+	$('.area_close').click(function(){
+	  $(this).parents('.system_popout_area').hide();
+	});
+	
+	
 	//-- meta group switcher
 	
 	$('.meta_group_sel').click(function(){
@@ -652,12 +659,70 @@
 	});
 	
 	
+	
+	//-- iterm function execute
+	$('#act_get_edit_logs').click(function(){
+	  
+	   // get value
+	  var data_dom    =  $('._target');
+	  var data_no    = data_dom.attr('no');
+	  var dom_record = $(this);
+	  
+	  if( ! data_no ){
+	    system_message_alert('',"資料錯誤");
+		return false;
+	  }
+	  
+	  $('#meta_edit_record_block').empty();
+	  $('#act_editor_setting').trigger('click');
+	  
+	   // active ajax
+      $.ajax({
+        url: 'index.php',
+	    type:'POST',
+	    dataType:'json',
+	    data: {act:'Meta/history/'+data_no},
+		beforeSend: function(){  system_loading(); },
+        error: 		function(xhr, ajaxOptions, thrownError) {  console.log( ajaxOptions+" / "+thrownError);},
+	    success: 	function(response) {
+		  if(response.action){
+			if(!response.data.length){
+			  system_message_alert('alert',"無編輯紀錄");
+			  return false;
+			} 
+			 
+			$.each(response.data,function(i,log){
+		      var record = $("<tr/>");
+              record.append("<td>"+log.time+"</td>");
+			  record.append("<td>"+log.editor+"</td>");
+			  
+			  var modify = "";
+			  $.each(log.fields,function(mf,mv){
+				if(mf.match(/^\_/)) return true;
+				modify = modify+"<div>"+mf+" => "+mv+"</div>";  
+			  });
+			  
+			  record.append("<td>"+modify+"</td>");
+			  record.appendTo($('#meta_edit_record_block'));
+			  
+			}); 
+			$('#meta_edit_logs').show();
+			
+		  }else{
+			system_message_alert('',response.info);
+	      }
+	    },
+		complete:	function(){  }
+      }).done(function(r) {  system_loading(); });
+	});
+	
+	
 	//-- iterm function execute
 	$('#delete_current_meta').click(function(){
 	  
 	   // get value
-	  var task_no    = $('#taskid').data('refer');
-	  var data_no    = $('._target').attr('no');
+	  var data_dom    =  $('._target');
+	  var data_no    = data_dom.attr('no');
 	  var dom_record = $(this);
 	  
 	  if( ! data_no ){
@@ -670,18 +735,20 @@
 	    return false;  
 	  }
 	  
+	  $('#act_editor_setting').trigger('click');
+	  
 	   // active ajax
       $.ajax({
         url: 'index.php',
 	    type:'POST',
 	    dataType:'json',
-	    data: {act:'Built/deleitem/'+task_no+'/'+data_no},
+	    data: {act:'Meta/deleitem/'+data_no},
 		beforeSend: function(){  system_loading(); },
         error: 		function(xhr, ajaxOptions, thrownError) {  console.log( ajaxOptions+" / "+thrownError);},
 	    success: 	function(response) {
 		  if(response.action){
-			if($("tr._target").length){
-			  $("tr._target").remove();		  
+			if(data_dom.length){
+			  data_dom.remove();		  
 			}
 			location.hash = '';
 			$('#edit_close').trigger('click');

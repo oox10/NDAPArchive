@@ -2228,7 +2228,7 @@
 		];
 		  
 		try {
-		  if($meta['_keep']){
+		  if($source['_metakeep']){
 			$params['body']=$search_conf;
 			$response = $client->index($params);
 		  }else{
@@ -2266,6 +2266,113 @@
       }
 	  return $result;  
 	}
+	
+	//-- Admin Meta : Read Meta edit logs
+	// [input] : DataNo  :  \w\d+;  system_id
+	public function ADMeta_Read_Item_Logs( $DataNo='' ){
+	  
+	  $result_key = parent::Initial_Result();
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查序號
+	    if(!preg_match('/^[\w\d\-]+$/',$DataNo)  ){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+	    
+		// 取得編輯資料
+		$logs = [];
+		$DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_META_LOGS());
+		$DB_GET->bindParam(':sid'   , $DataNo );	
+		if( !$DB_GET->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		while($tmp = $DB_GET->fetch(PDO::FETCH_ASSOC)){
+		  $logs[] = [
+		    'time'=>$tmp['mdtime'],
+			'id'=>$tmp['identifier'],
+			'editor'=>$tmp['uploader'],
+			'fields'=>json_decode($tmp['updated'],true),
+		  ];
+		}
+		
+		// final 
+		$result['action'] = true;
+    	$result['data'] = $logs;
+    	
+		
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
+	
+	//-- Admin Meta : Dele Meta Element
+	// [input] : DataNo  :  \w\d+;  system_id
+	public function ADMeta_Dele_Item_Data( $DataNo='' ){
+	  
+	  $result_key = parent::Initial_Result('dele');
+	  $result  = &$this->ModelResult[$result_key];
+	  
+	  try{  
+		
+		// 檢查序號
+	    if(!preg_match('/^[\w\d\-]+$/',$DataNo)  ){
+		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
+		}
+	    
+		// 取得編輯資料
+		$meta = NULL;
+		$DB_GET	= $this->DBLink->prepare( SQL_AdMeta::GET_TARGET_META_DATA());
+		$DB_GET->bindParam(':id'   , $DataNo );	
+		if( !$DB_GET->execute() || !$meta = $DB_GET->fetch(PDO::FETCH_ASSOC)){
+		  throw new Exception('_SYSTEM_ERROR_DB_RESULT_NULL');
+		}
+		
+		// 補充系統欄位
+		$meta_update['_userupdate'] = $this->USER->UserID;
+		$meta_update['_metakeep'] = 0;
+		
+		// 執行更新
+		$DB_SAVE= $this->DBLink->prepare(SQL_AdMeta::UPDATE_SOURCE_META(array('_metakeep'),$meta['zong']));
+		$DB_SAVE->bindValue(':id'    , $meta['identifier']);
+		$DB_SAVE->bindValue(':_metakeep' , 0);
+		if( !$DB_SAVE->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
+		}
+		
+		// 刪除META
+		$DB_DELE= $this->DBLink->prepare(SQL_AdMeta::DELETE_TARGET_METADATA());
+		$DB_DELE->bindValue(':id'    , $DataNo);
+		if( !$DB_DELE->execute()){
+		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
+		}
+		
+		
+		// 執行mdlogs
+		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
+		$DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
+		$DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
+		$DB_LOGS->bindValue(':identifier' , $meta['identifier']);
+		$DB_LOGS->bindValue(':source' , json_encode($source));
+		$DB_LOGS->bindValue(':update' , json_encode($meta_update));
+		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
+		$DB_LOGS->bindValue(':result' , 1);
+		$DB_LOGS->execute();
+		
+		// final 
+		$result['action'] = true;
+    	$result['data'] = $DataNo;
+    	
+	  } catch (Exception $e) {
+        $result['message'][] = $e->getMessage();
+      }
+	  return $result;  
+	}
+	
 	
 	
 	
@@ -2483,61 +2590,6 @@
 	  return $result;  
 	}
 	
-	//-- Admin Built : Dele Task Element
-	// [input] : taskid  :  \w\d+;
-	// [input] : itemid  :  \w\d+;
-	public function ADBuilt_Dele_Item_Data( $TaskId='',$ItemId=''){
-	  
-	  $result_key = parent::Initial_Result('done');
-	  $result  = &$this->ModelResult[$result_key];
-	  
-	  try{  
-		
-		// 檢查序號
-	    if(!preg_match('/^TSK\d+$/',$TaskId)  ||  !preg_match('/^[\w\d\-]+$/',$ItemId)  ){
-		  throw new Exception('_SYSTEM_ERROR_PARAMETER_FAILS');
-		}
-	    
-		$task_meta['_keep'] = 0;
-		
-		// 執行更新
-		$DB_SAVE= $this->DBLink->prepare(SQL_AdMeta::UPDATE_ELEMENT_DATA(array('_keep')));
-		$DB_SAVE->bindValue(':taskid' , $TaskId);
-		$DB_SAVE->bindValue(':itemid' , $ItemId);
-		$DB_SAVE->bindValue(':_keep', 0);
-		
-		if( !$DB_SAVE->execute()){
-		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
-		}
-		
-		// 更新任務資料
-		$DB_UPD= $this->DBLink->prepare(SQL_AdMeta::UPDATE_TASK_STATUS());
-		$DB_UPD->bindValue(':taskid' , $TaskId);
-		$DB_UPD->bindValue(':status' , '_EDITING');
-		if( !$DB_UPD->execute()){
-		  throw new Exception('_SYSTEM_ERROR_DB_ACCESS_FAIL');
-		}
-		
-		// 執行logs
-		/*
-		$DB_LOGS	= $this->DBLink->prepare(SQL_AdMeta::LOGS_META_MODIFY());
-		$DB_LOGS->bindValue(':zong' 	  , $meta['zong']);
-		$DB_LOGS->bindValue(':sysid' 	  , $meta['system_id']);
-		$DB_LOGS->bindValue(':identifier' , $meta['identifier']);
-		$DB_LOGS->bindValue(':source' , json_encode($source));
-		$DB_LOGS->bindValue(':update' , json_encode($meta_update));
-		$DB_LOGS->bindValue(':user' , $this->USER->UserID);
-		$DB_LOGS->bindValue(':result' , 1);
-		$DB_LOGS->execute();
-		*/
-		// final 
-		$result['action'] = true;
-    	
-	  } catch (Exception $e) {
-        $result['message'][] = $e->getMessage();
-      }
-	  return $result;  
-	}
 	
 	
 	
