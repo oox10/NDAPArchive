@@ -288,7 +288,7 @@
 				  </div>
 				  <div class='zong_set'>
 					<div class='cover'>
-					  <img src='theme/image/thumb_data05.jpg' />
+					  <img src='theme/image/thumb_data06.jpg' />
 					</div>
 					<div class='intro'>
 					  <h3 >
