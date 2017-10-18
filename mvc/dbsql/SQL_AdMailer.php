@@ -64,6 +64,12 @@
 	}
 	
 	
+	//-- Tasks Mailer :  get mail jobs today  
+	public static function GET_MAILER_TASKS(){
+	  $SQL_String = "SELECT * FROM system_mailer WHERE mail_date = :mail_date AND  _status_code=0 AND _keep=1 ORDER BY _status_code ASC,_mail_date DESC,smno ASC;";
+	  return $SQL_String;
+	}  
+	
 	
 	
 	
