@@ -152,6 +152,10 @@ class Landing_Controller extends Admin_Controller{
       self::data_output('html','client_sitelink',$this->Model->ModelResult);
 	}
 	
+	// PAGE: helper page 
+	public function helper(){
+      self::data_output('html','client_helper',$this->Model->ModelResult);
+	}
 	
 	/***--- POST ACTION SET ---***/
 	// PAGE: get client announcement
