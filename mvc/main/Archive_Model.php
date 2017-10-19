@@ -969,7 +969,7 @@
 			  }
 			  break;
             
-            case 'serial':
+            case 'serial': case 'meeting_level': case 'category_level':
 			  $pattern = array('/\(/','/\)/','/(\d)\/(\d)/');
 			  $replace = array('&#40;','&#41;','\\1&#47;\\2');
 			  $query_set['value'] = array_map(function($field) use($pattern,$replace){ return preg_replace($pattern,$replace,$field); },$query_set['value'] );

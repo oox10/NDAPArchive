@@ -81,7 +81,7 @@
 				  $time_query['end']	= date('Y-m-d',strtotime($searchstring));	
 				}
 				break;
-			    
+				
 			  case 'condition':
 			  default:
                 $search_and_sets = preg_split('/[&]/',$searchstring);
