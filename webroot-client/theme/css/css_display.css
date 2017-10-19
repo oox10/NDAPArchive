@@ -279,7 +279,7 @@
 			  
 			  
 			    
-			  div.opt_size_title{}
+			  .opt_size_title{width:50px;}
 			  
 			  .object_scale_control{
 				flex:1;  
