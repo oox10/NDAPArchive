@@ -109,10 +109,10 @@
 	  // 搜尋
 	  search['search'] = {};
 	  if($('#filter_date_start').val()){
-		search['search']['date_start'] = $('#search_date_start').val();
+		search['search']['date_start'] = $('#filter_date_start').val();
 	  }
 	  if($('#filter_date_end').val()){
-		search['search']['date_end'] = $('#search_date_end').val();
+		search['search']['date_end'] = $('#filter_date_end').val();
 	  }
 	  if($('#filter_search_terms').val()){
 		search['search']['condition'] = $('#filter_search_terms').val();
