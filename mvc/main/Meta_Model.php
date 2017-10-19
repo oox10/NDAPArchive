@@ -128,6 +128,7 @@
 		  $data_search['limit'] = '';	
 		}
 		
+		
 		$params =[
 			"size" => 20,
 			"from" => 0,
@@ -137,7 +138,7 @@
 			  'query'=>[
 				 "query_string" => [
 					//"query"=> "(\"蔣中正\") AND (\"顧祝\") AND location:(*漢口* *江西*) AND in_store_no:00200000*",
-					"query"=> "zong:( ".$zong_query." ) ".( count($term_query) ? "AND".join(" AND ",$term_query) : '' ),
+					"query"=> "zong:( ".$zong_query." ) ".( count($term_query) ? " AND ".join(" AND ",$term_query) : '' ),
 				 ],
 			  ],
 			  "highlight"=>[

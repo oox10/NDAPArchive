@@ -106,8 +106,8 @@
 		    <div class='filter_query'>
 			  	<div class='filter_search_block'>
 				  <input type='text' id='filter_search_terms'  value='<?php echo isset($data_filter['search']['condition']) ? $data_filter['search']['condition']:''; ?>' placeholder='輸入搜尋關鍵字' /> 
-				  <span class='input_date' ><input type='text' id='filter_date_start' placeholder='日期-起' size='10' value='<?php echo isset($data_filter['search']['date_start']) ? $date_filter['search']['date_start'] : '';  ?>' /><i class="fa fa-calendar" aria-hidden="true"></i></span>
-				  <span class='input_date' ><input type='text' id='filter_date_end'   placeholder='日期-迄' size='10' value='<?php echo isset($data_filter['search']['date_end']) ? $date_filter['search']['date_end'] : '';  ?>' /><i class="fa fa-calendar" aria-hidden="true"></i></span> 
+				  <span class='input_date' ><input type='text' id='filter_date_start' placeholder='日期-起' size='10' value='<?php echo isset($data_filter['search']['date_start']) ? $data_filter['search']['date_start'] : '';  ?>' /><i class="fa fa-calendar" aria-hidden="true"></i></span>
+				  <span class='input_date' ><input type='text' id='filter_date_end'   placeholder='日期-迄' size='10' value='<?php echo isset($data_filter['search']['date_end']) ? $data_filter['search']['date_end'] : '';  ?>' /><i class="fa fa-calendar" aria-hidden="true"></i></span> 
 				</div>
 				<span class='filter_option' >  
 				  <button id='filter_submit'  type='button' class='active'><i class="fa fa-search" aria-hidden="true"></i> 篩選 </button> 

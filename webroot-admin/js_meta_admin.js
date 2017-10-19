@@ -120,7 +120,6 @@
 	  
 	  search['limit'] = $('input.mlimit:checked').val();
 	  
-	  
 	  return search;		
 	}
 	
