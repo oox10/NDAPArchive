@@ -60,7 +60,7 @@
 	  
 	  if($img_w >= $img_h){  // 橫幅影像
 	    
-		$wtr_new_w = intval($img_w/4);
+		$wtr_new_w = intval($img_w/8);
 		$wtr_new_h = intval($wtr_new_w * $wtr_h / $wtr_w);
 		
 		$wtr_loc_w = ($img_w - $wtr_new_w)-10;
@@ -74,11 +74,9 @@
 		imagecopyresized($wm_board, $image_w, 0, 0, 0, 0, $wtr_new_w, $wtr_new_h, $wtr_w, $wtr_h); // 浮水印複製並縮小到新圖框中
         
 		
-		
-		
 	  }else{  // 直幅影像
 	    
-		$wtr_new_h = intval($img_h/10);
+		$wtr_new_h = intval($img_h/20);
 		$wtr_new_w = intval($wtr_new_h * $wtr_w / $wtr_h);
 		
 		$wtr_loc_w = ($img_w - $wtr_new_w)-10;
