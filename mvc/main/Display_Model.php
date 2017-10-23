@@ -649,7 +649,7 @@
 		  if(isset($DobjConf['position']) && count($DobjConf['position'])){
 		    foreach($DobjConf['position'] as  $order => $doinfo){
 			  $media_list[] = [
-			    'code' => rawurlencode(self::iencode($New_Encode_Seed,$order+1)),
+			    'code' => rawurlencode(self::iencode($New_Encode_Seed,$order)),
 				'file' =>$doinfo['file'],
 				'thumb'=>$object['InStoreNo'].'/'.$doinfo['file'].'-'.str_replace(':','',$doinfo['pointer']['stime']).'.jpg',
 				'stime'=>$doinfo['pointer']['stime'],				
