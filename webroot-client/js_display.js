@@ -323,7 +323,7 @@ $(window).on('load',function () {
 				if(object_built.media.length){
 				  $.each(object_built.media,function(order,dobj){
 					//video.append("<source type='video/mp4' src='http://localhost:8080/NDAPArchive/webroot-video/video.php?src="+dobj.file+"#t="+dobj.stime+","+dobj.etime+"' id='v-"+dobj.code+"' />");  
-				    video.append("<source type='video/mp4' src='http://localhost:8080/NDAPArchive/webroot-client/index.php?act=Display/loadmp4/"+dobj.code+"#t="+dobj.stime+","+dobj.etime+"' id='v-"+dobj.code+"' />");  
+				    video.append("<source type='video/mp4' src='http://"+location.host+":8080/webroot-client/index.php?act=Display/loadmp4/"+dobj.code+"#t="+dobj.stime+","+dobj.etime+"' id='v-"+dobj.code+"' />");  
 				    var thumb = $("<div/>").addClass('media_phase').attr('data-code','v-'+dobj.code);
 				    thumb.append("<img src='screen.php?src="+dobj.thumb+"'  />")
 				    thumb.append('<h2> <i class="fa fa-video-camera" aria-hidden="true"></i>'+dobj.file+"</h2>")
