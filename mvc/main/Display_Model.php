@@ -105,7 +105,7 @@
 		$acc_pri = 1;
 		/*
 		//if( ($this->USER->UserID=='admin' || $this->USER->UserID=='ahas') && $meta['_view']=='開放' ){
-		if( $_SESSION['AHAS']['CLIENT']['ACCOUNT_TYPE']=='GUEST' && $meta['_view']=='開放' ){
+		if( $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCOUNT_TYPE']=='GUEST' && $meta['_view']=='開放' ){
 		
 		  $user_ip = filter_var($this->USER->UserIP , FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE);  //被濾掉就是內部IP
 		  if( strlen($user_ip)  ){
@@ -118,7 +118,7 @@
 			  $country_code =  $ip_location['country_code'];
 	        }
 		    if($country_code != 'TW' || $this->USER->UserIP=='140.112.114.183'){
-		      $_SESSION['AHAS']['CLIENT']['ACCESS_LOCK'] = true;
+		      $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_LOCK'] = true;
 			  $acc_pri = 0;
 		    }
 		  }
@@ -506,11 +506,11 @@
 		$Real_ObjectCode = str_pad($ResourceCode,17,'0',STR_PAD_LEFT);
 		
 		// 若已加鎖，則需要測試是否可解鎖，否則將鎖定於第一頁
-		if(isset($_SESSION['AHAS']['CLIENT']['ACCESS_TEST'])){
-		  $image_accesss_lock = $_SESSION['AHAS']['CLIENT']['ACCESS_TEST'];
+		if(isset($_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_TEST'])){
+		  $image_accesss_lock = $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_TEST'];
           if(preg_match('/^(.*?)@(.*?)$/',$PageCode,$match) && $match[2]==$image_accesss_lock['recapture']){
-			unset($_SESSION['AHAS']['CLIENT']['ACCESS_LOCK']); 
-			unset($_SESSION['AHAS']['CLIENT']['ACCESS_TEST']); 
+			unset($_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_LOCK']); 
+			unset($_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_TEST']); 
 		    $PageCode = $match[1];
 		  }else{
 			$PageCode = '';  
@@ -597,7 +597,7 @@
 		  $New_Page_View['page_list']   = $Image_Access['page_list'];
 		  $New_Page_View['page_count']   = $Image_Access['count'];
 		  
-		  $New_Page_View['page_access_lock'] = isset($_SESSION['AHAS']['CLIENT']['ACCESS_LOCK']) && $_SESSION['AHAS']['CLIENT']['ACCESS_LOCK'] ? 1 : 0;
+		  $New_Page_View['page_access_lock'] = isset($_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_LOCK']) && $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_LOCK'] ? 1 : 0;
 		  
 		  foreach($New_Page_View['page_list'] as &$Page_Num){
 		    $Page_Num = rawurlencode(self::iencode($New_Encode_Seed,$Page_Num));
@@ -760,7 +760,7 @@
 		$user_ip = filter_var($this->USER->UserIP , FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE);  //被濾掉就是內部IP
 		$filename = pathinfo($file_address,PATHINFO_BASENAME );
 		$file_download_name = '';
-		if( !strlen($user_ip) &&  $_SESSION['AHAS']['CLIENT']['ACCOUNT_TYPE']!='GUEST'){
+		if( !strlen($user_ip) &&  $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCOUNT_TYPE']!='GUEST'){
 		  $file_download_name = pathinfo($file_address,PATHINFO_BASENAME );
 		}else{
 		  $file_download_name = hash('crc32', pathinfo($file_address,PATHINFO_BASENAME ).time()).'.'.pathinfo($file_address,PATHINFO_EXTENSION);
@@ -828,8 +828,8 @@
 		$lock_point_x = 0;
 		$lock_point_y = 0;
 		
-		if(isset($_SESSION['AHAS']['CLIENT']['ACCESS_LOCK']) && $_SESSION['AHAS']['CLIENT']['ACCESS_LOCK']){
-		  $image_accesss_lock = $_SESSION['AHAS']['CLIENT']['ACCESS_TEST'];  
+		if(isset($_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_LOCK']) && $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_LOCK']){
+		  $image_accesss_lock = $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_TEST'];  
 		  $lock_point_x = isset($image_accesss_lock['point_x']) ? intval($image_accesss_lock['point_x']) : 0;
 		  $lock_point_y = isset($image_accesss_lock['point_y']) ? intval($image_accesss_lock['point_y']) : 0;
 		}
@@ -839,8 +839,8 @@
 		}
 		
 		if( (($user_point_x >= ($lock_point_x-3)) && ($user_point_x <= ($lock_point_x+2))) && (($user_point_y >= ($lock_point_y-3)) && ($user_point_y <= ($lock_point_y+2))) ){
-		  unset($_SESSION['AHAS']['CLIENT']['ACCESS_LOCK']); 
-	      unset($_SESSION['AHAS']['CLIENT']['ACCESS_TEST']); 
+		  unset($_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_LOCK']); 
+	      unset($_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_TEST']); 
 		  
 		  // 若已解鎖，則將存取鎖定取消
 		  $DB_UPD = $this->DBLink->prepare(SQL_Display::UNLOCK_ACC_PERMISSION());
@@ -849,7 +849,7 @@
 		  
 		}else{
 		  //確認失敗就替換掉鎖頭
-		  $_SESSION['AHAS']['CLIENT']['ACCESS_TEST']['point_x'] = rand(0,100);
+		  $_SESSION[_SYSTEM_NAME_SHORT]['CLIENT']['ACCESS_TEST']['point_x'] = rand(0,100);
 		}
 		
 		$result['action']=true;
