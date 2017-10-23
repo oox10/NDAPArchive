@@ -321,9 +321,21 @@
 			case '2': 
 			case '3': throw new Exception('_LOGIN_INFO_ACCOUNT_STATUS_UNACTIVE');   break; 
 			case '4': 
-			  if($login_data['password']!=$user_login['user_mail']){
+			  
+			  if($user_login['user_mail']==''){ // 補救當初註冊沒有設定email  
+                $user_fix_mail = $login_data['password'];
+				if(!filter_var($user_fix_mail, FILTER_VALIDATE_EMAIL)){ 
+				  throw new Exception('_LOGIN_INFO_ACCOUNT_REPASSWD_MAIL_CHECK'); break;   
+				}
+				
+				$DB_FIX= $this->DBLink->prepare("UPDATE user_info SET user_mail='".$user_fix_mail."' WHERE uid=:uid");
+			    $DB_FIX->bindParam(':uid',$user_login['uno'],PDO::PARAM_INT);	
+				$DB_FIX->execute();
+				
+			  }else if($login_data['password']!=$user_login['user_mail']){
 				throw new Exception('_LOGIN_INFO_ACCOUNT_REPASSWD_MAIL_CHECK'); break;   
 			  }
+			  
 			  // 註冊repass連結
 		      $reg_code = substr(md5($login_data['account'].'#'.time()),(rand(0,3)*8),8).'.'.System_Helper::generator_password(2);  
 			  
