@@ -631,7 +631,7 @@
 					$('#group_members').append("<optgroup label='"+gpc+"' >");  
 					gpcode = mbr['gid'];
 				  }
-				  var $DOM = $("<option/>").val(mbr.uno).html(mbr.user_id+'/'+mbr.user_name);
+				  var $DOM = $("<option/>").val(mbr.uno).html(mbr.user_id+' / '+mbr.user_name);
 				  $DOM.appendTo('#group_members');
 				   pool_member.push(mbr.user_id+' / '+mbr.user_name);
 				});  
@@ -654,14 +654,7 @@
 			});
 			
 			// create member select auto cokplete
-			$( "#member_search" ).autocomplete({
-			  source: pool_member,
-			  select: function( event, ui ) {
-				console.log(ui);  
-				  
-			  }
-			});
-			
+			$( "#member_search" ).autocomplete("option","source",pool_member);
 			
 		  }else{
 			system_message_alert('',response.info);
