@@ -511,6 +511,7 @@
 			
 			var now_group  = '';
 			var now_member = {};
+			var pool_member=[];
 			
 			// insert group selecter
 			var gps = response.data.groups;
@@ -537,6 +538,7 @@
 				  }
 				  var $DOM = $("<option/>").val(mbr.uno).html(mbr.user_id+' / '+mbr.user_name);
 				  $DOM.appendTo('#group_members');
+				  pool_member.push(mbr.user_id+' / '+mbr.user_name);
 				});  
 			  }
 			});
@@ -555,6 +557,18 @@
 				$DOM.append("<td><button type='button' class='act_leave_group cancel'><i class='mark16 pic_group_leave'></i></button></td>");  
 			  }
 			  $DOM.appendTo('#member_list');
+			});
+			
+			// create member select auto cokplete
+			$( "#member_search" ).autocomplete({
+			  source: pool_member,
+			  select: function( event, ui ) {
+				var target = $('#group_members').find('option:contains("'+ui.item.value+'")').val()
+				$('#group_members').val(target);
+			  },
+			  close: function( event, ui ) {
+				$(this).val('');  
+			  }
 			});
 			
 			
@@ -577,7 +591,7 @@
 	  
 	  var target_group = $(this).find('option:selected');
 	  var group_code = $(this).val();
-	  
+	  var pool_member=[];
 	  
 	  if(group_code=='_new_group'){
 		// insert group meta
@@ -619,6 +633,7 @@
 				  }
 				  var $DOM = $("<option/>").val(mbr.uno).html(mbr.user_id+'/'+mbr.user_name);
 				  $DOM.appendTo('#group_members');
+				   pool_member.push(mbr.user_id+' / '+mbr.user_name);
 				});  
 			  }
 			});
@@ -637,6 +652,16 @@
 			  }
 			  $DOM.appendTo('#member_list');
 			});
+			
+			// create member select auto cokplete
+			$( "#member_search" ).autocomplete({
+			  source: pool_member,
+			  select: function( event, ui ) {
+				console.log(ui);  
+				  
+			  }
+			});
+			
 			
 		  }else{
 			system_message_alert('',response.info);

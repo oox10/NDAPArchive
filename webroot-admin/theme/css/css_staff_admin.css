@@ -190,8 +190,6 @@
 	    div.member_setting{
 	      display:flex;
 	      align-items:center;
-	      justify-content:space-between;
-		
 	    }
 	    
 		div.member_filter{
@@ -200,10 +198,20 @@
 		  justify-content:flex-end; 
 		  padding-right:50px;
 		}
+		  #group_members,#member_search{
+			width:240px;  
+		  }
+		  
 		  #member_qualify{
-			width:230px;  
+			width:125px;  
 		  }
 		
+           .ui-autocomplete {
+				max-height: 300px;
+				overflow-y: auto;
+				/* prevent horizontal scrollbar */
+				overflow-x: hidden;
+			  }		
 		
 	
 	select#group_selecter{width:200px;}

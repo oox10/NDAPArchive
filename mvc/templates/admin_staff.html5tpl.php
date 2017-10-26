@@ -391,21 +391,24 @@
 	    <div class='setter_content'>
 		  <h2>選擇新增成員</h2>
           <div class='member_setting'>
-		    <select class='_setinit' id='group_members'>
+		    <label>選擇目標帳號：</label>
+			<select class='_setinit' id='group_members'>
 			  <option value=''> - </option>	 	
 			</select>
-			<label>設定IP範圍:</label>
-			<input type='text' id='member_qualify' value='' placeholder='請輸入限制IP範圍' />
-			<button type="button" class='active' id='act_addto_group' > 加入 </button> 
+			，
+			<input type='text' id='member_search' placeholder='搜尋帳號' />
 		  </div>
 		  <div class='member_setting'>
 		    <?php if(!isset($module_config['roles'])): ?> 
 			<span> 系統尚未進行角色設定 </span>
 			<?php else: ?> 
 			<?php  foreach($module_config['roles'] as $role) : ?>  
-			<input type='checkbox' class='' name='add_role'  value='<?php echo $role['rno'];?>' > <label title='<?php echo $role['descrip'];?>'><?php echo $role['name'];?></label>
+			<input type='checkbox' class='' name='add_role'  value='<?php echo $role['rno'];?>' > <label title='<?php echo $role['descrip'];?>' ><?php echo $role['rno'];?> <?php echo $role['name'];?>, </label>
 			<?php  endforeach; ?>  
 			<?php endif; ?> 
+			<label>設定IP範圍:</label>
+		    <input type='text' id='member_qualify' value='' placeholder='請輸入限制IP範圍' />
+			<button type="button" class='active' id='act_addto_group' > 加入 </button> 
 		  </div>
 		  <h2>群組成員編輯</h2>
 		  <div>
