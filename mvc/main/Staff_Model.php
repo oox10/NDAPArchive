@@ -464,7 +464,7 @@
 		  $role_set = [];
 		  $DB_OBJ = $this->DBLink->prepare(SQL_AdStaff::GET_ROLES_LIST());
 		  $DB_OBJ->execute();
-		  while($role = $DB_OBJ->fetchAll(PDO::FETCH_ASSOC)){
+		  while($role = $DB_OBJ->fetch(PDO::FETCH_ASSOC)){
 		    $role_set[] = "'".$role['rno']."',".$role['_initial'];	
 		  }
 		  $role_conf = "COLUMN_CREATE(".join(',',$role_set).")";
